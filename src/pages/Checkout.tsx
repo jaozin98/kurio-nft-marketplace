@@ -1,5 +1,6 @@
 import { Link, Navigate, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
+import { BackButton } from '@/components/BackButton'
 import { WalletFormFields } from '@/components/WalletFormFields'
 import { useSession } from '@/features/auth/queries'
 import { useCart } from '@/features/cart/queries'
@@ -239,7 +240,7 @@ function CheckoutFlow({ user }: { user: User }) {
 
   return (
     <div className="py-6">
-      <nav aria-label="Você está em" className="text-sm">
+      <nav aria-label="Você está em" className="text-sm max-md:hidden">
         <Link to="/" className="hover:text-primary">Início</Link>
         <span aria-hidden> / </span>
         <Link to="/" hash="catalogo" className="hover:text-primary">Mercado</Link>
@@ -247,7 +248,12 @@ function CheckoutFlow({ user }: { user: User }) {
         <span aria-current="page">Pagamento</span>
       </nav>
 
-      <h1 className="sr-only">Pagamento</h1>
+      <div className="flex items-center gap-3 md:block">
+        <BackButton />
+        <h1 className="sr-only max-md:not-sr-only max-md:flex-1 max-md:pr-12 max-md:text-center max-md:text-xl max-md:font-bold">
+          Pagamento<span className="md:sr-only"> com carteira</span>
+        </h1>
+      </div>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_380px]">
         <form
@@ -303,7 +309,7 @@ function CheckoutFlow({ user }: { user: User }) {
           </div>
         </form>
 
-        <aside aria-label="Resumo do pedido" className="h-fit space-y-6">
+        <aside aria-label="Resumo do pedido" className="h-fit space-y-6 max-lg:order-first">
           <section aria-labelledby="seus-nfts">
             <h2 id="seus-nfts" className="text-lg font-bold">
               Seus NFTs
@@ -366,7 +372,7 @@ function CheckoutFlow({ user }: { user: User }) {
               {wallets.map((item) => (
                 <li key={item.id}>
                   <label
-                    className={`flex cursor-pointer items-center gap-3 rounded border p-3 ${
+                    className={`flex cursor-pointer items-center gap-3 rounded border p-3 max-md:rounded-2xl ${
                       walletId === item.id ? 'border-primary' : 'border-border'
                     }`}
                   >
@@ -424,7 +430,7 @@ function CheckoutFlow({ user }: { user: User }) {
           <button
             type="submit"
             form="pagamento"
-            className="w-full rounded bg-primary py-3 font-bold text-primary-foreground"
+            className="cta w-full rounded bg-primary py-3 font-bold text-primary-foreground"
           >
             Revisar pedido
           </button>
@@ -605,7 +611,7 @@ function ReviewDialog(props: ReviewProps) {
             type="button"
             onClick={onConfirm}
             disabled={pending || !quote || stale || !!unavailable}
-            className="flex-1 rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-50"
+            className="cta flex-1 rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-50"
           >
             {pending ? 'Enviando pedido…' : props.noResponse ? 'Tentar de novo' : 'Confirmar compra'}
           </button>

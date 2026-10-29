@@ -4,6 +4,7 @@ import { logout, useSession } from '@/features/auth/queries'
 import { useCart } from '@/features/cart/queries'
 import { CartIcon, LoginIcon, SearchIcon } from './icons'
 import { Footer } from './Footer'
+import { MobileNav } from './MobileNav'
 import { LiveNotices } from './LiveNotices'
 import { RealtimeSync } from './RealtimeSync'
 
@@ -48,7 +49,7 @@ export function Layout({ children }: { children: ReactNode }) {
           KURIO
         </Link>
 
-        <nav aria-label="Principal" className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 lg:order-none lg:w-auto lg:flex-nowrap lg:gap-8">
+        <nav aria-label="Principal" className="order-last hidden w-full flex-wrap gap-x-6 gap-y-1 md:flex lg:order-none lg:w-auto lg:flex-nowrap lg:gap-8">
           <Link
             to="/"
             activeOptions={{ exact: true, includeHash: true, includeSearch: false }}
@@ -79,14 +80,14 @@ export function Layout({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="flex items-center gap-4 text-sm">
-          <Link to="/" hash="busca" aria-label="Buscar NFTs" className="p-1 hover:text-primary">
+          <Link to="/" hash="busca" aria-label="Buscar NFTs" className="hidden p-1 hover:text-primary md:block">
             <SearchIcon />
           </Link>
 
           <Link
             to="/cart"
             aria-label={count > 0 ? `Carrinho, ${count} itens` : 'Carrinho'}
-            className="relative p-1 hover:text-primary"
+            className="relative hidden p-1 hover:text-primary md:block"
           >
             <CartIcon />
             {count > 0 && (
@@ -128,7 +129,7 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main id="conteudo" tabIndex={-1} className="flex-1 outline-none">
+      <main id="conteudo" tabIndex={-1} className="flex-1 pb-28 outline-none md:pb-0">
         {children}
       </main>
 
@@ -136,6 +137,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <LiveNotices />
 
       <Footer />
+      <MobileNav cartCount={count} loggedIn={!!user} />
     </div>
   )
 }

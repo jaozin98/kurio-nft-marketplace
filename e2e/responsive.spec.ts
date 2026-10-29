@@ -40,7 +40,10 @@ for (const width of widths) {
 
     test('o conteúdo principal continua acessível: menu e catálogo', async ({ page }) => {
       await page.goto('/')
-      await expect(page.getByRole('navigation', { name: 'Principal' })).toBeVisible()
+      // abaixo de 768 px o menu vira a barra inferior (Figma); a partir daí fica no cabeçalho
+      await expect(
+        page.getByRole('navigation', { name: width < 768 ? 'Navegação inferior' : 'Principal' }),
+      ).toBeVisible()
       await expect(
         page.getByRole('region', { name: 'Catálogo' }).getByRole('link', { name: /#\d+ .*ETH/ }).first(),
       ).toBeVisible()

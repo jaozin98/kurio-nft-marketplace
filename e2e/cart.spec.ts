@@ -80,12 +80,12 @@ test('itens do visitante são mantidos ao fazer login', async ({ page }) => {
 
 test('a mesma obra em edições diferentes vira linhas separadas', async ({ page }) => {
   await page.goto('/nft/4')
-  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await page.getByRole('button', { name: /^(COMPRAR|Comprar NFT)$/ }).click()
   await page.getByText('Adicionado ao carrinho.').waitFor()
 
   await page.getByRole('radio', { name: 'ABERTA' }).click()
   const added = page.waitForResponse((res) => res.url().endsWith('/api/cart/items') && res.ok())
-  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await page.getByRole('button', { name: /^(COMPRAR|Comprar NFT)$/ }).click()
   await added
 
   await page.goto('/cart')

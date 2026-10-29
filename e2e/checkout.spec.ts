@@ -270,7 +270,7 @@ test('compra completa a partir do catálogo, sem atalhos', async ({ page }) => {
   await catalogo.getByRole('link', { name: /Captain Ape #148/ }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Captain Ape #148' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await page.getByRole('button', { name: /^(COMPRAR|Comprar NFT)$/ }).click()
   await page.getByRole('link', { name: 'Ver carrinho' }).click()
   await expect(page).toHaveURL('/cart')
 

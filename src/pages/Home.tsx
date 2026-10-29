@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { FiltersPanel } from '@/components/FiltersPanel'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, SlidersHorizontal } from 'lucide-react'
 import { ChevronRightIcon, CloseIcon, SearchIcon } from '@/components/icons'
 import { NftCard, NftCardSkeleton } from '@/components/NftCard'
 import { useFeaturedNft, useFilterMeta, useNftList } from '@/features/nfts/queries'
@@ -74,12 +74,6 @@ export function Home() {
         </aside>
 
         <section aria-label="Catálogo">
-          <button
-            onClick={() => drawer.current?.showModal()}
-            className="mb-4 w-full rounded border border-primary px-4 py-2 text-sm font-bold text-primary lg:hidden"
-          >
-            Filtros
-          </button>
           <dialog
             ref={drawer}
             aria-labelledby="filtros-titulo"
@@ -108,7 +102,8 @@ export function Home() {
             </button>
           </dialog>
 
-          <div className="relative mb-6">
+          <div className="mb-6 flex gap-2">
+            <div className="relative flex-1">
             <label htmlFor="busca" className="sr-only">
               Buscar NFT
             </label>
@@ -122,6 +117,14 @@ export function Home() {
               placeholder="Buscar NFT pelo nome"
               className={`${field} w-full pl-9`}
             />
+            </div>
+            <button
+              onClick={() => drawer.current?.showModal()}
+              aria-label="Filtros"
+              className="cta grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground lg:hidden"
+            >
+              <SlidersHorizontal aria-hidden className="size-5" />
+            </button>
           </div>
 
           <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
@@ -187,7 +190,7 @@ export function Home() {
               Nenhum NFT encontrado com esses filtros.
             </p>
           ) : (
-            <ul className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            <ul className="grid grid-cols-2 gap-4 max-md:[&>li:nth-child(even)]:mt-10 md:grid-cols-3">
               {data.items.map((nft) => (
                 <li key={nft.id}>
                   <NftCard nft={nft} />
@@ -238,9 +241,59 @@ export function Hero() {
   const { data: featured, isPending } = useFeaturedNft()
 
   return (
+    <>
+    <section
+      aria-labelledby="hero-titulo-m"
+      className="mt-2 overflow-hidden rounded-3xl bg-gradient-to-br from-[#3b2314] via-[#6a4122] to-[#a8672d] p-5 md:hidden"
+    >
+      <div className="grid grid-cols-[1fr_auto] items-center gap-3">
+        <div className="space-y-2 pr-2">
+          <p className="text-xs font-medium tracking-[0.08em]">Bem-vindo à Kurio</p>
+          <h1 id="hero-titulo-m" className="text-xl font-bold leading-snug">
+            SEJA DONO DA CULTURA DIGITAL
+          </h1>
+          <p className="text-xs leading-5 text-[#e4cfb2]">
+            Descubra NFTs selecionados de criadores do mundo todo.
+          </p>
+          <Link
+            to="/"
+            hash="catalogo"
+            className="inline-flex items-center gap-1 text-xs font-bold text-primary"
+          >
+            EXPLORAR
+            <ArrowRight aria-hidden className="size-3.5" />
+          </Link>
+        </div>
+
+        <div className="relative size-32">
+          {featured ? (
+            <Link to="/nft/$id" params={{ id: featured.id }} className="block size-full">
+              <img
+                src={featured.image}
+                alt={`NFT em destaque: ${featured.name}`}
+                width={128}
+                height={128}
+                fetchPriority="high"
+                className="size-full rounded-2xl object-cover"
+              />
+            </Link>
+          ) : (
+            <div aria-hidden className="shimmer size-full rounded-2xl" />
+          )}
+          <img
+            src="/nfts/gorilla-a.jpg"
+            alt=""
+            width={56}
+            height={56}
+            className="absolute -bottom-3 -left-3 size-12 rounded-xl border-4 border-[#5a3719] object-cover"
+          />
+        </div>
+      </div>
+    </section>
+
     <section
       aria-labelledby="hero-titulo"
-      className="grid items-center gap-8 py-8 md:grid-cols-[1fr_300px] md:py-12 lg:grid-cols-[1fr_368px]"
+      className="hidden items-center gap-8 py-8 md:grid md:grid-cols-[1fr_300px] md:py-12 lg:grid-cols-[1fr_368px]"
     >
       <div className="space-y-5">
         <p className="text-sm font-medium tracking-[0.1em]">Bem-vindo à Kurio</p>
@@ -280,6 +333,7 @@ export function Hero() {
         </Link>
       ) : null}
     </section>
+    </>
   )
 }
 

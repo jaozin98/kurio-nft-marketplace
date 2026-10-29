@@ -85,7 +85,7 @@ test('falha ao favoritar desfaz a mudança', async ({ page }) => {
 
 test('adiciona ao carrinho', async ({ page }) => {
   await page.goto('/nft/4')
-  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await page.getByRole('button', { name: /^(COMPRAR|Comprar NFT)$/ }).click()
   await expect(page.getByText('Adicionado ao carrinho.')).toBeVisible()
 })
 

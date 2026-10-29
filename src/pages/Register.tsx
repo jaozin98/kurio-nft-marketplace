@@ -99,7 +99,7 @@ export function Register() {
           <button
             type="submit"
             disabled={register.isPending}
-            className="w-full rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-60"
+            className="cta w-full rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-60"
           >
             {register.isPending ? 'Criando conta...' : 'Criar conta'}
           </button>

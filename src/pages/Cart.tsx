@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
+import { BackButton } from '@/components/BackButton'
 import { TrashIcon } from '@/components/icons'
 import { RelatedNfts } from '@/components/RelatedNfts'
 import { Stepper } from '@/components/Stepper'
@@ -56,7 +57,7 @@ export function Cart() {
 
   return (
     <div className="py-6">
-      <nav aria-label="Você está em" className="text-sm">
+      <nav aria-label="Você está em" className="text-sm max-md:hidden">
         <Link to="/" className="hover:text-primary">
           Início
         </Link>
@@ -68,7 +69,12 @@ export function Cart() {
         <span aria-current="page">Carrinho</span>
       </nav>
 
-      <h1 className="sr-only">Carrinho de NFTs</h1>
+      <div className="flex items-center gap-3 md:block">
+        <BackButton />
+        <h1 className="sr-only max-md:not-sr-only max-md:flex-1 max-md:pr-12 max-md:text-center max-md:text-xl max-md:font-bold">
+          Carrinho de NFTs
+        </h1>
+      </div>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_340px]">
         <section aria-label="Itens do carrinho">
@@ -87,7 +93,7 @@ export function Cart() {
               ))}
             </div>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y divide-border max-md:space-y-3 max-md:divide-y-0">
               {cart.items.map((item) => (
                 <CartRow
                   key={`${item.nft.id}|${item.editionId}`}
@@ -135,9 +141,9 @@ function CartRow({
   const lineTotal = fromUnits(toUnits(nft.price) * BigInt(quantity))
 
   return (
-    <li className={`${columns} flex flex-wrap items-center gap-x-4 gap-y-3 py-4`}>
+    <li className={`${columns} flex flex-wrap items-center gap-x-4 gap-y-3 py-4 max-md:rounded-2xl max-md:bg-card max-md:p-3`}>
       <div className="flex min-w-0 basis-full items-center gap-3 md:basis-auto">
-        <img src={nft.image} alt="" width={56} height={56} className="size-14 shrink-0 rounded-lg object-cover" />
+        <img src={nft.image} alt="" width={56} height={56} className="size-14 shrink-0 rounded-lg object-cover max-md:size-20 max-md:rounded-xl" />
         <div className="min-w-0">
           <Link to="/nft/$id" params={{ id: nft.id }} className="block truncate font-bold hover:underline">
             {nft.name}
@@ -194,7 +200,7 @@ function Summary({ userId }: { userId: string | undefined }) {
   const quote = cart?.quote
 
   return (
-    <aside aria-label="Resumo da carteira" className="h-fit rounded-lg bg-card p-5">
+    <aside aria-label="Resumo da carteira" className="h-fit rounded-lg bg-card p-5 max-md:rounded-3xl">
       <h2 className="text-lg font-bold">Resumo da carteira</h2>
 
       {cart?.coupon ? (
@@ -228,7 +234,7 @@ function Summary({ userId }: { userId: string | undefined }) {
             <button
               type="submit"
               disabled={applyCoupon.isPending}
-              className="rounded bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
+              className="cta rounded bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
             >
               Aplicar
             </button>
@@ -253,7 +259,7 @@ function Summary({ userId }: { userId: string | undefined }) {
 
       <Link
         to="/checkout"
-        className="mt-5 block w-full rounded bg-primary py-3 text-center font-bold text-primary-foreground"
+        className="cta mt-5 block w-full rounded bg-primary py-3 text-center font-bold text-primary-foreground"
       >
         Conectar e finalizar
       </Link>

@@ -12,7 +12,7 @@ test.describe('cadastro e login', () => {
     await registerUser(page, 'Marina Teste', 'marina@exemplo.test')
 
     await expect(page).toHaveURL('/')
-    await expect(page.getByRole('link', { name: /marina_teste|Perfil/ })).toBeVisible()
+    await expect(page.getByRole('banner').getByRole('link', { name: /marina_teste|Perfil/ })).toBeVisible()
 
     await page.reload()
     await expect(page.getByRole('banner').getByRole('button', { name: 'Sair' })).toBeVisible()

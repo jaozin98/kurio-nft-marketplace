@@ -4,7 +4,7 @@ Solução do desafio de frontend: marketplace de NFTs em React e TypeScript, com
 
 ## O que tem
 
-Início (busca, filtros, abas, ordenação e paginação na URL), detalhe do NFT com edições, carrinho com cupom, pagamento com carteira e rede, confirmação de pedido, login, cadastro, perfil (dados, avatar e senha) e carteiras. Preços e disponibilidade mudam em tempo real por Socket.IO.
+Início (Hero, busca, filtros, abas, ordenação e paginação na URL, faixas de promoção e Diário da Cunhagem), detalhe do NFT com edições, carrinho com cupom, pagamento com carteira e rede (revisão em modal), confirmação do pedido, login e cadastro (modais), perfil (dados, avatar e senha), carteiras principal e secundária e lista de interesse. Preços e disponibilidade mudam em tempo real por Socket.IO. No mobile o app usa uma barra de navegação inferior, como no Figma.
 
 Stack: React 19, TypeScript, TanStack Router, TanStack Query, Axios, Socket.IO (cliente), Tailwind CSS, shadcn/ui, MSW (REST e Socket.IO), Playwright e Lighthouse. O build é feito com Vite.
 
@@ -47,7 +47,7 @@ O arquivo `.env.example` mostra o valor padrão. O build de demonstração publi
 | `ana@greenmint.test` | `senha123` |
 | `bruno@greenmint.test` | `senha123` |
 
-Você também pode criar contas em `/register`. As senhas nunca ficam em claro: o mock guarda só o hash SHA-256.
+Você também pode criar contas em `/register` (nome de usuário de 3 a 20 letras, números ou `_`). As senhas nunca ficam em claro: o mock guarda só o hash SHA-256. As duas contas de teste já têm a carteira principal (`Principal`, MetaMask, Ethereum) e a secundária (`Reserva`, Coinbase Wallet, Polygon), e o código de indicação delas é `KURIO2026`. Contas novas começam sem carteira.
 
 Cupons: `GREEN10` (10%), `GREEN25` (25%) e `OLD20` (expirado). Qualquer outro código é inválido.
 
@@ -91,7 +91,7 @@ As falhas de `list-error` e `network-error` são 2 porque o TanStack Query tenta
 | Preço alterado durante a compra | `/?scenario=price-change` e confirmar uma compra (ou `__mock.updateNft('4', { price: '1.10' })` com o NFT 4 no carrinho) |
 | Edição esgotada durante a compra | `/?scenario=sold-out` e confirmar uma compra (ou `__mock.updateNft('4', { stock: 0 })`) |
 | Favoritar com falha (rollback) | favoritar o NFT 13 (a API responde 503) |
-| Conexão da carteira recusada | usar a carteira secundária das contas de teste (endereço terminado em `dead`) |
+| Conexão da carteira recusada | escolher a carteira `Reserva` das contas de teste (endereço terminado em `dead`) e clicar em "Conectar carteira" |
 | Pagamento recusado | escolher a rede Arbitrum no pagamento, ou `/?scenario=payment-declined` |
 | Timeout depois de criar o pedido | `/?scenario=order-timeout` e confirmar uma compra; use "Recuperar pedido" |
 | Evento duplicado ou antigo | `__mock.realtime.resend('nft.updated', evento)` |
@@ -101,7 +101,7 @@ Outras regras fixas dos dados: os NFTs de número múltiplo de 7 estão esgotado
 
 ## Testes
 
-272 testes Playwright (136 por projeto, desktop 1440 px e mobile 390 px), cada um em contexto isolado:
+306 testes Playwright (153 por projeto: desktop 1440 px e mobile 390 px), cada um em contexto isolado:
 
 - `catalog.spec.ts`: busca, filtros combinados, ordenação, paginação, abas, restauração pelo histórico (voltar e avançar) e refresh.
 - `detail.spec.ts`: detalhe, edições, favoritos (com rollback) e compra.
@@ -109,7 +109,7 @@ Outras regras fixas dos dados: os NFTs de número múltiplo de 7 estão esgotado
 - `checkout.spec.ts`: compra completa (inclusive a partir do catálogo, sem atalhos), campos do pagamento, recusas, clique repetido, os cenários `price-change`, `sold-out`, `session-expired` e `payment-declined`, disponibilidade alterada pelo socket e timeout com recuperação.
 - `realtime.spec.ts`: eventos pelo Socket.IO, duplicados e antigos, queda e retomada, isolamento por usuário e relógio controlado (`page.clock`).
 - `security.spec.ts`: um usuário não abre o pedido de outro (403), pedido e rota inexistentes (404) e acesso direto a cada tela.
-- `account.spec.ts`: cadastro, login, sessão, troca de usuário, perfil, avatar, senha e carteiras.
+- `account.spec.ts`: cadastro e login em modal, sessão, troca de usuário, perfil (um só Salvar para dados e senha), avatar, carteiras principal e secundária e o menu lateral da conta.
 - `network.spec.ts`: skeleton, falha com nova tentativa, vazio, fora de ordem e reset.
 - `a11y.spec.ts`: teclado, foco, gaveta de filtros, erros ligados por aria, movimento reduzido e o axe.
 - `visual.spec.ts`: início, detalhe, carrinho e pagamento (baselines versionadas em `e2e/__screenshots__/`).
@@ -118,6 +118,8 @@ Outras regras fixas dos dados: os NFTs de número múltiplo de 7 estão esgotado
 Os testes de REST passam pelos handlers do MSW, e os de tempo real passam pelo `socket.io-client`.
 
 ## Lighthouse
+
+> Estes números foram medidos **antes** das últimas mudanças de interface (rodapé completo, novas seções da Home, fotos novas e mobile). Rode `npm run build && npm run lighthouse` para atualizar `lighthouse/` e esta tabela.
 
 Rodado em `vite build` + `vite preview` com os mocks no cenário padrão, 3 medições por página e perfil (mediana). Os relatórios HTML e JSON de cada medição estão em `lighthouse/reports/`, e o resumo em `lighthouse/summary.md`. O script `scripts/lighthouse.mjs` contém a configuração.
 
@@ -143,7 +145,7 @@ ou conecte o repositório pela Vercel (build `npm run build`, saída `dist`). O 
 
 ## Arte dos NFTs
 
-As fotos dos NFTs (4 personagens, em `public/nfts/`, 3 variantes de cada) foram recortadas de capturas de tela do Figma que o autor forneceu, porque o arquivo do Figma é só de visualização e não permite exportar os assets. Por isso a resolução é limitada (cerca de 234 a 434 px de lado, ampliada para 512). Com os arquivos originais, basta trocar os JPGs de `public/nfts/` mantendo os nomes. Como há só 4 personagens, os 48 NFTs do catálogo repetem a arte, como no próprio Figma.
+As fotos dos NFTs (4 personagens, em `public/nfts/`, 3 variantes de cada) foram recortadas de capturas de tela do Figma que o autor forneceu, porque o arquivo do Figma é só de visualização e não permite exportar os assets. Por isso a resolução original é limitada (cerca de 234 a 434 px de lado); as imagens foram ampliadas para 768 px com reamostragem Lanczos e nitidez leve, o que melhora a definição sem inventar detalhe. Com os arquivos originais, basta trocar os JPGs de `public/nfts/` mantendo os nomes. Como há só 4 personagens, os 48 NFTs do catálogo repetem a arte, como no próprio Figma.
 
 ## Estrutura
 

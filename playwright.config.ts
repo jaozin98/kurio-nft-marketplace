@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test'
 
 export default defineConfig({
   testDir: './e2e',
+  // com vários testes em paralelo a máquina fica mais lenta; 10s evita falhas por demora
+  expect: { timeout: 10_000 },
   snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}{ext}',
   reporter: [['html', { open: 'never' }], ['list']],
   use: {

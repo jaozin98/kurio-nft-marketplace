@@ -77,7 +77,7 @@ export function Login() {
           <button
             type="submit"
             disabled={login.isPending}
-            className="w-full rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-60"
+            className="cta w-full rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-60"
           >
             {login.isPending ? 'Entrando...' : 'Entrar'}
           </button>

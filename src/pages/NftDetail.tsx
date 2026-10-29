@@ -1,6 +1,7 @@
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { useEffect, useState } from 'react'
+import { BackButton } from '@/components/BackButton'
 import { HeartIcon } from '@/components/icons'
 import { RelatedNfts } from '@/components/RelatedNfts'
 import { Stepper } from '@/components/Stepper'
@@ -88,7 +89,11 @@ function NftView({ nft }: { nft: Nft }) {
 
   return (
     <article className="py-6">
-      <nav aria-label="Você está em" className="text-sm">
+      <div className="md:hidden">
+        <BackButton />
+      </div>
+
+      <nav aria-label="Você está em" className="text-sm max-md:hidden">
         <Link to="/" className="hover:text-primary">
           Início
         </Link>
@@ -98,7 +103,7 @@ function NftView({ nft }: { nft: Nft }) {
         </Link>
       </nav>
 
-      <div className="mt-4 grid items-start gap-8 md:grid-cols-2">
+      <div className="mt-4 grid grid-cols-1 items-start gap-8 md:grid-cols-2">
         <div className="flex flex-col-reverse gap-4 xl:flex-row">
           <ul className="flex shrink-0 gap-3 xl:w-[88px] xl:flex-col">
             {nft.gallery.map((src, index) => (
@@ -117,7 +122,7 @@ function NftView({ nft }: { nft: Nft }) {
             ))}
           </ul>
 
-          <div className="flex-1 rounded-lg bg-card p-4">
+          <div className="flex-1 rounded-lg bg-card p-4 max-md:bg-transparent max-md:p-0">
             <img
               src={nft.gallery[selected]}
               alt={`${nft.name}, imagem ${selected + 1} de ${nft.gallery.length}`}
@@ -129,7 +134,7 @@ function NftView({ nft }: { nft: Nft }) {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 max-md:relative max-md:-mt-8 max-md:rounded-3xl max-md:bg-card max-md:p-5">
           <h1 className="text-[28px] font-bold leading-none">{nft.name}</h1>
           <p className="flex items-baseline gap-3">
             <span className="text-[22px] font-bold text-primary">{formatEth(nft.price)}</span>
@@ -191,13 +196,23 @@ function NftView({ nft }: { nft: Nft }) {
               disabled={stock === 0}
             />
 
-            <div className="flex w-full gap-3 sm:ml-auto sm:w-auto">
+            <div className="flex w-full flex-wrap gap-3 sm:ml-auto sm:w-auto sm:flex-nowrap">
               <button
                 onClick={() => addToCart.mutate({ nftId: nft.id, editionId, quantity })}
                 disabled={stock === 0 || addToCart.isPending}
-                className="flex-1 rounded bg-primary px-6 py-2 text-base font-bold text-primary-foreground disabled:opacity-50 sm:flex-none"
+                className="cta flex-1 rounded bg-primary px-6 py-2 text-base font-bold text-primary-foreground disabled:opacity-50 sm:flex-none"
               >
-                {stock === 0 ? 'Edição esgotada' : addToCart.isPending ? 'Adicionando…' : 'COMPRAR'}
+                {stock === 0 ? (
+                  'Edição esgotada'
+                ) : addToCart.isPending ? (
+                  'Adicionando…'
+                ) : (
+                  <>
+                    {/* o Figma usa "Comprar NFT" no mobile e "COMPRAR" no desktop */}
+                    <span className="md:hidden">Comprar NFT</span>
+                    <span className="hidden md:inline">COMPRAR</span>
+                  </>
+                )}
               </button>
 
               <button

@@ -11,7 +11,7 @@ export async function addToCart(page: Page, nftId: string, quantity = 1) {
   for (let i = 1; i < quantity; i++) {
     await page.getByRole('button', { name: 'Aumentar quantidade' }).click()
   }
-  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await page.getByRole('button', { name: /^(COMPRAR|Comprar NFT)$/ }).click()
   await page.getByText('Adicionado ao carrinho.').waitFor()
 }
 

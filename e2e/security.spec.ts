@@ -40,7 +40,7 @@ test('rota inexistente mostra a página de não encontrado', async ({ page }) =>
 
 test.describe('acesso direto a cada tela prevista', () => {
   const publicPages: [string, string | RegExp][] = [
-    ['/', 'SEJA DONO DO FUTURO'],
+    ['/', /SEJA DONO D[AO]/],
     ['/nft/4', 'Cosmic Bloom #104'],
     ['/cart', /Seu carrinho está vazio|Carrinho/],
     ['/login', 'Entrar'],

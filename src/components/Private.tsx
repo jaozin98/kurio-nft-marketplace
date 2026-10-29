@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { Navigate } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { useSession } from '@/features/auth/queries'
@@ -8,7 +9,7 @@ export function Private({ to, children }: { to: string; children: (user: User) =
   const { data: user } = useSession()
 
   if (user === undefined) {
-    return <div aria-busy="true" className="shimmer mx-auto mt-8 h-96 max-w-2xl rounded-lg" />
+    return <Skeleton aria-busy="true" className="mx-auto mt-8 h-96 max-w-2xl rounded-lg" />
   }
   if (user === null) return <Navigate to="/login" search={{ redirect: to }} />
 

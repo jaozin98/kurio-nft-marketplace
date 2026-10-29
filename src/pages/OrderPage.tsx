@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { Link, Navigate, useParams } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { MailCheck } from 'lucide-react'
@@ -30,7 +31,7 @@ export function OrderPage() {
 
   if (user === null) return <Navigate to="/login" search={{ redirect: `/orders/${id}` }} />
 
-  if (isPending) return <div aria-busy="true" className="shimmer mx-auto mt-8 h-96 max-w-xl rounded-lg" />
+  if (isPending) return <Skeleton aria-busy="true" className="mx-auto mt-8 h-96 max-w-xl rounded-lg" />
 
   if (error) {
     const code = isAxiosError(error) ? error.response?.status : undefined

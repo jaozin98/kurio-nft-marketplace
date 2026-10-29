@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { Link } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { BackButton } from '@/components/BackButton'
@@ -89,7 +90,7 @@ export function Cart() {
           {isPending ? (
             <div aria-busy="true" className="mt-4 space-y-3">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="shimmer h-20 rounded-lg" />
+                <Skeleton key={i} className="h-20 rounded-lg" />
               ))}
             </div>
           ) : (
@@ -300,5 +301,5 @@ function Line({
 
 // mantém a largura do valor enquanto carrega, sem pular o layout
 function Placeholder() {
-  return <span className="shimmer inline-block h-4 w-20 rounded align-middle" />
+  return <Skeleton as="span" className="inline-block h-4 w-20 rounded align-middle" />
 }

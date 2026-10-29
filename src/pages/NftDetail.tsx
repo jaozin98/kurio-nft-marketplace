@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { useEffect, useState } from 'react'
@@ -28,12 +29,12 @@ export function NftDetail() {
     // mesmas proporções da página carregada, para o layout não pular
     return (
       <div className="grid gap-8 py-8 md:grid-cols-2" aria-busy="true">
-        <div className="shimmer aspect-square rounded-lg" />
+        <Skeleton className="aspect-square rounded-lg" />
         <div className="space-y-4">
-          <div className="shimmer h-8 w-2/3 rounded" />
-          <div className="shimmer h-6 w-1/4 rounded" />
-          <div className="shimmer h-24 w-full rounded" />
-          <div className="shimmer h-10 w-1/2 rounded" />
+          <Skeleton className="h-8 w-2/3 rounded" />
+          <Skeleton className="h-6 w-1/4 rounded" />
+          <Skeleton className="h-24 w-full rounded" />
+          <Skeleton className="h-10 w-1/2 rounded" />
         </div>
       </div>
     )

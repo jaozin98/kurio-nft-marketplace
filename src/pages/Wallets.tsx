@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { useState, type FormEvent } from 'react'
 import { AccountLayout } from '@/components/AccountLayout'
 import { Private } from '@/components/Private'
@@ -69,8 +70,8 @@ function WalletsView({ user }: { user: User }) {
       <h1 className="sr-only">Carteiras</h1>
       {isPending ? (
         <div aria-busy="true" className="space-y-4">
-          <div className="shimmer h-96 rounded-lg" />
-          <div className="shimmer h-24 rounded-lg" />
+          <Skeleton className="h-96 rounded-lg" />
+          <Skeleton className="h-24 rounded-lg" />
         </div>
       ) : (
         <>

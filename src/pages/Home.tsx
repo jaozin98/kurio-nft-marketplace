@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { Link, useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { FiltersPanel } from '@/components/FiltersPanel'
@@ -278,7 +279,7 @@ export function Hero() {
               />
             </Link>
           ) : (
-            <div aria-hidden className="shimmer size-full rounded-2xl" />
+            <Skeleton aria-hidden className="size-full rounded-2xl" />
           )}
           <img
             src="/nfts/gorilla-a-sm.jpg"
@@ -321,7 +322,7 @@ export function Hero() {
       </div>
 
       {isPending ? (
-        <div aria-hidden className="shimmer aspect-[4/3] w-full rounded-lg md:aspect-square md:justify-self-end" />
+        <Skeleton aria-hidden className="aspect-[4/3] w-full rounded-lg md:aspect-square md:justify-self-end" />
       ) : featured ? (
         <Link
           to="/nft/$id"
@@ -345,7 +346,7 @@ export function Hero() {
 
 function FeaturedBanner() {
   const { data: featured } = useFeaturedNft()
-  if (!featured) return <div aria-hidden className="shimmer h-80 rounded-lg" />
+  if (!featured) return <Skeleton aria-hidden className="h-80 rounded-lg" />
 
   return (
     <section aria-labelledby="destaque-titulo" className="rounded-lg bg-card p-4">

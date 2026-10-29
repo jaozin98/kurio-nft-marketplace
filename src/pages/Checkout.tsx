@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { Link, Navigate, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { BackButton } from '@/components/BackButton'
@@ -62,7 +63,7 @@ function baseValues(user: User, wallet: Wallet | undefined): Record<string, stri
 export function Checkout() {
   const { data: user } = useSession()
 
-  if (user === undefined) return <div className="shimmer mx-auto mt-8 h-96 max-w-2xl rounded-lg" />
+  if (user === undefined) return <Skeleton className="mx-auto mt-8 h-96 max-w-2xl rounded-lg" />
   if (user === null) return <Navigate to="/login" search={{ redirect: '/checkout' }} />
 
   return <CheckoutFlow user={user} />
@@ -192,7 +193,7 @@ function CheckoutFlow({ user }: { user: User }) {
     )
   }
 
-  if (cartPending) return <div className="shimmer mx-auto mt-8 h-96 max-w-2xl rounded-lg" />
+  if (cartPending) return <Skeleton className="mx-auto mt-8 h-96 max-w-2xl rounded-lg" />
 
   if (!cart || cart.items.length === 0) {
     // o carrinho esvaziou depois do envio: o pedido pode ter sido criado e a resposta perdida
@@ -338,7 +339,7 @@ function CheckoutFlow({ user }: { user: User }) {
             </div>
             <ul className="mt-2 space-y-2">
               {quote.isPending
-                ? [0, 1].map((i) => <li key={i} aria-hidden className="shimmer h-14 rounded" />)
+                ? [0, 1].map((i) => <Skeleton as="li" key={i} aria-hidden className="h-14 rounded" />)
                 : quote.data?.items.map(({ nft, editionId, quantity }) => (
                     <li key={`${nft.id}|${editionId}`} className="flex items-center gap-3 rounded bg-card p-2">
                       <img src={nft.image} alt="" width={44} height={44} className="size-11 rounded object-cover" />
@@ -549,7 +550,7 @@ function ReviewDialog(props: ReviewProps) {
         </dl>
 
         {!quote ? (
-          <div aria-busy="true" className="shimmer h-32 rounded" />
+          <Skeleton aria-busy="true" className="h-32 rounded" />
         ) : (
           <div>
             <ul className="space-y-1 text-sm">

@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { Link } from '@tanstack/react-router'
 import { CartIcon, HeartIcon } from '@/components/icons'
 import { formatEth } from '@/lib/eth'
@@ -62,10 +63,10 @@ export function NftCard({ nft }: { nft: Nft }) {
 export function NftCardSkeleton() {
   return (
     <div className="rounded-lg bg-card p-1" aria-hidden>
-      <div className="shimmer aspect-square rounded-lg" />
+      <Skeleton className="aspect-square rounded-lg" />
       <div className="space-y-2 px-2 pb-3 pt-3">
-        <div className="shimmer h-5 w-3/4 rounded" />
-        <div className="shimmer h-4 w-1/3 rounded" />
+        <Skeleton className="h-5 w-3/4 rounded" />
+        <Skeleton className="h-4 w-1/3 rounded" />
       </div>
     </div>
   )

@@ -1,3 +1,4 @@
+import { Skeleton } from "@/components/ui/skeleton"
 import { useState } from 'react'
 import type { FilterMeta, NftFilters } from '@/types'
 
@@ -43,7 +44,7 @@ export function FiltersPanel({ idPrefix, meta, filters, onChange }: Props) {
           ))}
           {!meta &&
             Array.from({ length: 6 }, (_, i) => (
-              <li key={i} aria-hidden className="shimmer my-2 h-5 rounded" />
+              <Skeleton as="li" key={i} aria-hidden className="my-2 h-5 rounded" />
             ))}
         </ul>
       </fieldset>

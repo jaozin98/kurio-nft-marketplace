@@ -127,10 +127,10 @@ Rodado em `vite build` + `vite preview` com os mocks no cenário padrão, 3 medi
 
 | Página | Perfil | Performance | Acessibilidade | Boas práticas | SEO | LCP | CLS | TBT |
 |---|---|---|---|---|---|---|---|---|
-| Início | mobile | 94 | 99 | 100 | 100 | 2703 ms | 0.001 | 161 ms |
-| Detalhe | mobile | 97 | 100 | 100 | 100 | 2458 ms | 0 | 119 ms |
-| Início | desktop | 100 | 100 | 100 | 100 | 743 ms | 0.022 | 0 ms |
-| Detalhe | desktop | 99 | 100 | 100 | 100 | 618 ms | 0.056 | 0 ms |
+| Início | mobile | 95 | 99 | 100 | 100 | 2725 ms | 0.001 | 121 ms |
+| Detalhe | mobile | 97 | 100 | 100 | 100 | 2475 ms | 0 | 106 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 707 ms | 0.022 | 0 ms |
+| Detalhe | desktop | 99 | 100 | 100 | 100 | 623 ms | 0.056 | 0 ms |
 
 Medido na versão final da interface (rodapé completo, seções da Home, fotos novas e mobile), em 29/10/2026.
 

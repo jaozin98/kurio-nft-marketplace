@@ -111,6 +111,9 @@ export function OrderPage() {
           <div>
             <dt className="text-muted-foreground">Transação (simulada)</dt>
             <dd className="break-all font-mono text-xs">{order.txHash}</dd>
+            <dd className="mt-1 text-xs text-muted-foreground">
+              Explorador de blocos indisponível: a transação é simulada.
+            </dd>
           </div>
           <div>
             <dt className="text-muted-foreground">Carteira</dt>

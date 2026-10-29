@@ -41,12 +41,12 @@ export function Layout({ children }: { children: ReactNode }) {
       >
         Pular para o conteúdo
       </a>
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border py-5 md:flex-nowrap">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-border py-5 lg:flex-nowrap">
         <Link to="/" className="text-base font-bold tracking-[0.15em]">
           KURIO
         </Link>
 
-        <nav aria-label="Principal" className="order-last flex w-full gap-6 overflow-x-auto md:order-none md:w-auto md:gap-8">
+        <nav aria-label="Principal" className="order-last flex w-full gap-6 overflow-x-auto lg:order-none lg:w-auto lg:gap-8">
           <Link
             to="/"
             activeOptions={{ exact: true, includeHash: true, includeSearch: false }}

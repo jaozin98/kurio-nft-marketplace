@@ -83,6 +83,12 @@ export const authHandlers = [
     return HttpResponse.json({ token: `token-${id}`, user: publicUser(account) }, { status: 201 })
   }),
 
+  // o token do mock é sem estado, então sair só confirma; o cliente descarta o token
+  http.post('/api/auth/logout', async () => {
+    await delay(100)
+    return new HttpResponse(null, { status: 204 })
+  }),
+
   http.get('/api/auth/me', async ({ request }) => {
     await delay(150)
     const account = getUser(request)

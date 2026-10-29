@@ -2,7 +2,8 @@ import { expect, test } from '@playwright/test'
 import { addToCart, login } from './helpers'
 
 // larguras avaliadas pelo desafio: celular, tablet e desktop
-const widths = [390, 768, 1440]
+// 320 px equivale a 400% de zoom em 1280 px (reflow do WCAG)
+const widths = [320, 390, 768, 1440]
 
 for (const width of widths) {
   test.describe(`largura ${width}px`, () => {

@@ -8,6 +8,10 @@ export const scenarios = [
   'empty', // a listagem volta vazia
   'out-of-order', // buscas mais curtas respondem mais devagar, então a resposta velha chega depois
   'order-timeout', // o pedido é criado, mas a resposta demora mais que o timeout do cliente
+  'price-change', // na primeira tentativa de compra o preço do item sobe e a cotação é recusada
+  'sold-out', // na primeira tentativa de compra a edição esgota
+  'session-expired', // a primeira tentativa de compra volta 401 (sessão expirou no checkout)
+  'payment-declined', // o pagamento é sempre recusado, em qualquer rede
 ] as const
 
 export type Scenario = (typeof scenarios)[number]
@@ -26,6 +30,16 @@ export function currentScenario(): Scenario {
 export function setScenario(name: Scenario) {
   localStorage.setItem(KEY, name)
   failuresLeft = 2
+  used.clear()
+}
+
+// cenários que acontecem uma vez só por carga da página
+const used = new Set<string>()
+
+export function consumeOnce(name: Scenario): boolean {
+  if (currentScenario() !== name || used.has(name)) return false
+  used.add(name)
+  return true
 }
 
 // quantas falhas ainda faltam no cenário atual (reinicia a cada carga da página)

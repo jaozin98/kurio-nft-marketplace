@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { addToCart, login } from './helpers'
+import { addToCart, login, loginAs } from './helpers'
 
 // NFT 4: 0.98 ETH, 5 em estoque. Taxas: ethereum 0.0025, arbitrum 0.001.
 
@@ -146,4 +146,142 @@ test('a compra baixa só o estoque da edição comprada', async ({ page }) => {
   await expect(page.getByText('1 disponível nesta edição.')).toBeVisible()
   await page.getByRole('radio', { name: 'ABERTA' }).click()
   await expect(page.getByText('4 disponíveis nesta edição.')).toBeVisible()
+})
+
+// ---- campos do layout e cenários nomeados
+
+const useScenario = (page: Page, name: string) =>
+  page.addInitScript((value) => localStorage.setItem('mock-scenario', value), name)
+
+const nftMock = (page: Page, fn: string, ...args: unknown[]) =>
+  page.evaluate(
+    ([name, params]) => (window as any).__mock[name as string](...(params as unknown[])),
+    [fn, args] as [string, unknown[]],
+  )
+
+test('nome de usuário inválido bloqueia a revisão', async ({ page }) => {
+  await startCheckout(page)
+  await page.getByLabel('Nome de usuário').fill('a!')
+  await page.getByRole('button', { name: 'Conectar carteira' }).click()
+  await expect(page.getByText('Conectada')).toBeVisible()
+  await page.getByRole('button', { name: 'Revisar pedido' }).click()
+
+  await expect(page.getByText('Use de 3 a 20 letras, números ou _')).toBeVisible()
+  await expect(page.getByLabel('Nome de usuário')).toHaveAttribute('aria-invalid', 'true')
+  await expect(page.getByRole('button', { name: 'Confirmar compra' })).toHaveCount(0)
+})
+
+test('observação passa de 280 caracteres e mostra o erro', async ({ page }) => {
+  await startCheckout(page)
+  await page.getByLabel(/Observação/).fill('x'.repeat(290))
+  await page.getByRole('button', { name: 'Conectar carteira' }).click()
+  await expect(page.getByText('Conectada')).toBeVisible()
+  await page.getByRole('button', { name: 'Revisar pedido' }).click()
+  await expect(page.getByText('Use até 280 caracteres')).toBeVisible()
+})
+
+test('o recibo e a revisão mostram o usuário e a observação', async ({ page }) => {
+  await startCheckout(page)
+  await page.getByLabel(/Observação/).fill('Entregar na carteira principal')
+  await connectAndReview(page)
+  await expect(page.getByText('(@ana)')).toBeVisible()
+  await expect(page.getByText('Entregar na carteira principal')).toBeVisible()
+})
+
+test('cenário price-change: o preço sobe na hora da compra e exige nova confirmação', async ({ page }) => {
+  await useScenario(page, 'price-change')
+  await startCheckout(page)
+  await connectAndReview(page)
+
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page.getByRole('alert').filter({ hasText: 'Os valores mudaram' })).toContainText('1.0825 ETH')
+  await expect(page.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
+  expect(await orderCount(page)).toBe(0)
+
+  await page.getByRole('button', { name: 'Aceitar novo valor' }).click()
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
+})
+
+test('cenário sold-out: a edição esgota na hora da compra e o pedido não é criado', async ({ page }) => {
+  await useScenario(page, 'sold-out')
+  await startCheckout(page)
+  await connectAndReview(page)
+
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'não está mais disponível' }).first(),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
+  expect(await orderCount(page)).toBe(0)
+})
+
+test('cenário session-expired: a sessão vence no envio e o checkout é retomado', async ({ page }) => {
+  await useScenario(page, 'session-expired')
+  await startCheckout(page)
+  await page.getByLabel('Nome completo').fill('Maria Retomada')
+  await connectAndReview(page)
+
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fcheckout/)
+  expect(await orderCount(page)).toBe(0)
+
+  await loginAs(page, 'ana@greenmint.test', 'senha123')
+  await expect(page).toHaveURL('/checkout')
+  await expect(page.getByLabel('Nome completo')).toHaveValue('Maria Retomada')
+
+  await page.getByRole('button', { name: 'Revisar pedido' }).click()
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
+  expect(await orderCount(page)).toBe(1)
+})
+
+test('cenário payment-declined: qualquer rede recusa e os itens ficam no carrinho', async ({ page }) => {
+  await useScenario(page, 'payment-declined')
+  await startCheckout(page)
+  await connectAndReview(page)
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page.getByRole('heading', { name: 'Pagamento recusado' })).toBeVisible({ timeout: 10000 })
+
+  await page.goto('/cart')
+  await expect(page.getByRole('link', { name: 'Cosmic Bloom #104' })).toBeVisible()
+})
+
+test('a disponibilidade muda pelo socket durante a revisão e bloqueia a compra', async ({ page }) => {
+  await startCheckout(page)
+  await connectAndReview(page)
+
+  await nftMock(page, 'updateNft', '4', { stock: 0 })
+
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'não está mais disponível' }),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Confirmar compra' })).toBeDisabled()
+  expect(await orderCount(page)).toBe(0)
+})
+
+test('compra completa a partir do catálogo, sem atalhos', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/')
+
+  const catalogo = page.getByRole('region', { name: 'Catálogo' })
+  await catalogo.getByRole('link', { name: /Captain Ape #148/ }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Captain Ape #148' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'COMPRAR' }).click()
+  await page.getByRole('link', { name: 'Ver carrinho' }).click()
+  await expect(page).toHaveURL('/cart')
+
+  // como visitante, o checkout pede login e devolve ao pagamento
+  await page.getByRole('link', { name: 'Conectar e finalizar' }).click()
+  await expect(page).toHaveURL(/\/login\?redirect=%2Fcheckout/)
+  await login(page)
+  await expect(page).toHaveURL('/checkout')
+
+  await connectAndReview(page)
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
+  await expect(page.getByText(/× Captain Ape #148/)).toBeVisible()
+  await expect(page.getByText(/^0x[0-9a-f]{64}$/)).toBeVisible()
 })

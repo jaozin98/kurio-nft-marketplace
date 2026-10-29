@@ -48,3 +48,27 @@ export const HeartIcon = ({ filled, ...props }: SVGProps<SVGSVGElement> & { fill
     <path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" />
   </svg>
 )
+
+export const PlusIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} strokeWidth={2.5} {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </svg>
+)
+
+export const MinusIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} strokeWidth={2.5} {...props}>
+    <path d="M5 12h14" />
+  </svg>
+)
+
+export const CloseIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="m6 6 12 12M18 6 6 18" />
+  </svg>
+)
+
+export const ChevronRightIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="m9 6 6 6-6 6" />
+  </svg>
+)

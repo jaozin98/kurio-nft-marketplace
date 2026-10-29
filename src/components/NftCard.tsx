@@ -23,7 +23,9 @@ export function NftCard({ nft }: { nft: Nft }) {
         />
       </div>
       <div className="px-2 pb-3 pt-3">
-        <h3 className="truncate text-base">{nft.name}</h3>
+        <h3 title={nft.name} className="truncate text-sm md:text-base">
+          {nft.name}
+        </h3>
         <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-sm">
           <span className="font-bold text-primary">{formatEth(nft.price)}</span>
           {nft.compareAt && (

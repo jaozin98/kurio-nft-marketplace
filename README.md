@@ -67,8 +67,12 @@ O estado do mock fica no `localStorage` (chave `mock-db-v5`), então sobrevive a
 | `empty` | a listagem volta vazia |
 | `out-of-order` | buscas curtas respondem mais devagar, então respostas velhas chegam depois |
 | `order-timeout` | o pedido é criado, mas a resposta demora mais que o timeout do cliente |
+| `price-change` | na primeira tentativa de compra o preço do item sobe (e o evento chega pelo socket) |
+| `sold-out` | na primeira tentativa de compra a edição do item esgota |
+| `session-expired` | a primeira tentativa de compra volta 401, como se a sessão tivesse vencido |
+| `payment-declined` | o pagamento é recusado em qualquer rede |
 
-Os falhos de `list-error` e `network-error` são 2 porque o TanStack Query tenta de novo uma vez; assim o erro aparece para o usuário e o botão "Tentar de novo" recupera.
+As falhas de `list-error` e `network-error` são 2 porque o TanStack Query tenta de novo uma vez; assim o erro aparece para o usuário e o botão "Tentar de novo" recupera.
 
 ## Como reproduzir as falhas
 
@@ -79,15 +83,16 @@ Os falhos de `list-error` e `network-error` são 2 porque o TanStack Query tenta
 | Falha de conexão | `/?scenario=network-error` |
 | Lentidão e skeleton | `/?scenario=slow` |
 | Resposta fora de ordem | `/?scenario=out-of-order` e digitar na busca |
-| Sessão expirada | no console: `localStorage.setItem('token', 'x')` e abrir `/profile` ou continuar o checkout |
+| Sessão expirada ao navegar | no console: `localStorage.setItem('token', 'x')` e abrir `/profile` |
+| Sessão expirada no checkout | `/?scenario=session-expired` e confirmar uma compra; depois de entrar de novo o formulário volta preenchido |
 | Cadastro com e-mail já existente | cadastrar `ana@greenmint.test` |
 | Erro de validação de formulário | enviar perfil, senha, carteira ou cadastro com dados inválidos |
 | Cupom inválido ou expirado | aplicar `QUALQUER` ou `OLD20` |
-| Preço alterado durante a compra | `__mock.updateNft('4', { price: '1.10' })` com o NFT 4 no carrinho |
-| Edição esgotada durante a compra | `__mock.updateNft('4', { stock: 0 })` |
+| Preço alterado durante a compra | `/?scenario=price-change` e confirmar uma compra (ou `__mock.updateNft('4', { price: '1.10' })` com o NFT 4 no carrinho) |
+| Edição esgotada durante a compra | `/?scenario=sold-out` e confirmar uma compra (ou `__mock.updateNft('4', { stock: 0 })`) |
 | Favoritar com falha (rollback) | favoritar o NFT 13 (a API responde 503) |
 | Conexão da carteira recusada | usar a carteira secundária das contas de teste (endereço terminado em `dead`) |
-| Pagamento recusado | escolher a rede Arbitrum no pagamento |
+| Pagamento recusado | escolher a rede Arbitrum no pagamento, ou `/?scenario=payment-declined` |
 | Timeout depois de criar o pedido | `/?scenario=order-timeout` e confirmar uma compra; use "Recuperar pedido" |
 | Evento duplicado ou antigo | `__mock.realtime.resend('nft.updated', evento)` |
 | Queda do socket | `__mock.realtime.pause(4000)` e `__mock.realtime.drop()` |
@@ -96,17 +101,19 @@ Outras regras fixas dos dados: os NFTs de número múltiplo de 7 estão esgotado
 
 ## Testes
 
-192 testes Playwright (96 por projeto, desktop 1440 px e mobile 390 px), cada um em contexto isolado:
+272 testes Playwright (136 por projeto, desktop 1440 px e mobile 390 px), cada um em contexto isolado:
 
+- `catalog.spec.ts`: busca, filtros combinados, ordenação, paginação, abas, restauração pelo histórico (voltar e avançar) e refresh.
 - `detail.spec.ts`: detalhe, edições, favoritos (com rollback) e compra.
 - `cart.spec.ts`: quantidades, remoção, cupom, persistência e login com carrinho de visitante.
-- `checkout.spec.ts`: compra completa, recusas, clique repetido, preço e estoque alterados, timeout com recuperação.
-- `realtime.spec.ts`: eventos pelo Socket.IO, duplicados e antigos, queda e retomada, isolamento por usuário.
+- `checkout.spec.ts`: compra completa (inclusive a partir do catálogo, sem atalhos), campos do pagamento, recusas, clique repetido, os cenários `price-change`, `sold-out`, `session-expired` e `payment-declined`, disponibilidade alterada pelo socket e timeout com recuperação.
+- `realtime.spec.ts`: eventos pelo Socket.IO, duplicados e antigos, queda e retomada, isolamento por usuário e relógio controlado (`page.clock`).
+- `security.spec.ts`: um usuário não abre o pedido de outro (403), pedido e rota inexistentes (404) e acesso direto a cada tela.
 - `account.spec.ts`: cadastro, login, sessão, troca de usuário, perfil, avatar, senha e carteiras.
 - `network.spec.ts`: skeleton, falha com nova tentativa, vazio, fora de ordem e reset.
 - `a11y.spec.ts`: teclado, foco, gaveta de filtros, erros ligados por aria, movimento reduzido e o axe.
 - `visual.spec.ts`: início, detalhe, carrinho e pagamento (baselines versionadas em `e2e/__screenshots__/`).
-- `responsive.spec.ts`: sem rolagem horizontal em 390, 768 e 1440 px nas telas principais.
+- `responsive.spec.ts`: sem rolagem horizontal em 320 (reflow com zoom), 390, 768 e 1440 px nas telas principais.
 
 Os testes de REST passam pelos handlers do MSW, e os de tempo real passam pelo `socket.io-client`.
 
@@ -116,12 +123,12 @@ Rodado em `vite build` + `vite preview` com os mocks no cenário padrão, 3 medi
 
 | Página | Perfil | Performance | Acessibilidade | Boas práticas | SEO | LCP | CLS | TBT |
 |---|---|---|---|---|---|---|---|---|
-| Início | mobile | 96 | 99 | 100 | 100 | 2555 ms | 0 | 135 ms |
-| Detalhe | mobile | 97 | 100 | 100 | 100 | 2453 ms | 0 | 98 ms |
-| Início | desktop | 100 | 100 | 100 | 100 | 581 ms | 0.022 | 0 ms |
-| Detalhe | desktop | 99 | 100 | 100 | 100 | 608 ms | 0.056 | 0 ms |
+| Início | mobile | 94 | 99 | 100 | 100 | 2617 ms | 0 | 178 ms |
+| Detalhe | mobile | 97 | 100 | 100 | 100 | 2461 ms | 0 | 99 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 584 ms | 0.022 | 0 ms |
+| Detalhe | desktop | 99 | 100 | 100 | 100 | 614 ms | 0.056 | 0 ms |
 
-Ambiente: Lighthouse 13.6.0, Chromium do Playwright (Chrome for Testing), Node 22, macOS arm64 com 8 núcleos. Todas as metas foram atingidas. O LCP no mobile (cerca de 2,5 s, com a rede 4G lenta simulada pelo Lighthouse) é o maior valor: o elemento é a foto principal do NFT. As imagens têm tamanho fixo e prioridade de carregamento, e o CLS fica em 0 no mobile. Não otimizei o peso das imagens além disso.
+Ambiente: Lighthouse 13.6.0, Chromium 156.0.8078.4 (o do Playwright), Node 22, macOS arm64 com 8 núcleos. Todas as metas foram atingidas. O LCP no mobile (cerca de 2,5 s, com a rede 4G lenta simulada pelo Lighthouse) é o maior valor: o elemento é a foto principal do NFT. As imagens têm tamanho fixo e prioridade de carregamento, e o CLS fica em 0 no mobile. Não otimizei o peso das imagens além disso.
 
 ## Deploy
 

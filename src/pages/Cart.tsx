@@ -16,7 +16,7 @@ import { formatEth, fromUnits, toUnits } from '@/lib/eth'
 import { editionOf } from '@/lib/nft'
 import type { CartItem } from '@/types'
 
-const columns = 'md:grid md:grid-cols-[1fr_110px_150px_120px_36px] md:items-center md:gap-4'
+const columns = 'md:grid md:grid-cols-[1fr_100px_130px_100px_36px] md:items-center md:gap-3'
 
 export function Cart() {
   const { data: user } = useSession()
@@ -102,7 +102,7 @@ export function Cart() {
             </ul>
           )}
 
-          <div aria-live="polite" className="mt-3 min-h-6 text-sm">
+          <div aria-live="polite" className="mt-3 text-sm lg:min-h-6">
             {mutationError && (
               <p role="alert" className="text-destructive">
                 {errorMessage(mutationError)}
@@ -142,11 +142,14 @@ function CartRow({
           <Link to="/nft/$id" params={{ id: nft.id }} className="block truncate font-bold hover:underline">
             {nft.name}
           </Link>
-          <p className="text-xs text-muted-foreground">ID do token: #{nft.id.padStart(4, '0')} · Edição {edition?.label}</p>
+          <p className="text-xs text-muted-foreground">
+            ID do token: #{nft.id.padStart(4, '0')} · Edição {edition?.label}
+          </p>
+          <p className="text-xs text-muted-foreground md:hidden">{formatEth(nft.price)} por unidade</p>
         </div>
       </div>
 
-      <p className="text-sm">
+      <p className="hidden text-sm md:block">
         <span className="sr-only">Preço </span>
         {formatEth(nft.price)}
       </p>
@@ -159,7 +162,7 @@ function CartRow({
         label={`Quantidade de ${nft.name} (${edition?.label})`}
       />
 
-      <p className="text-sm font-bold text-primary">
+      <p className="ml-auto text-sm font-bold text-primary md:ml-0">
         <span className="sr-only">Total </span>
         {formatEth(lineTotal)}
       </p>

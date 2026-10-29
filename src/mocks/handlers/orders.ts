@@ -1,9 +1,11 @@
 import { delay, http, HttpResponse } from 'msw'
+import { fromUnits, toUnits } from '@/lib/eth'
 import { editionOf } from '@/lib/nft'
 import type { NetworkId, Order, OrderRequest } from '@/types'
 import { db, save, walletsOf, type OrderRecord } from '../db'
 import { emitNftUpdated, emitOrderUpdated } from '../realtime'
-import { currentScenario } from '../scenario'
+import { updateNft } from '../admin'
+import { consumeOnce, currentScenario } from '../scenario'
 import { getUser, unauthorized } from './auth'
 import { buildCart, cartOf, itemKey, networkFees } from './cart'
 
@@ -93,7 +95,11 @@ export const orderHandlers = [
 
     const errors: Record<string, string> = {}
     if (!body.collector?.name?.trim()) errors.name = 'Informe o nome'
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(body.collector?.username ?? '')) {
+      errors.username = 'Use de 3 a 20 letras, números ou _'
+    }
     if (!/^\S+@\S+\.\S+$/.test(body.collector?.email ?? '')) errors.email = 'E-mail inválido'
+    if ((body.collector?.notes ?? '').length > 280) errors.notes = 'Use até 280 caracteres'
     if (Object.keys(errors).length) {
       return fail(422, 'validation', 'Confira os dados informados', { errors })
     }
@@ -105,9 +111,23 @@ export const orderHandlers = [
     }
     if (!(body.network in networkFees)) return fail(422, 'validation', 'Rede inválida')
 
+    // cenário: a sessão vence justo na hora de enviar o pedido
+    if (consumeOnce('session-expired')) return unauthorized()
+
     // revalida estoque e valores no momento da compra
-    const cart = buildCart(user.id, body.network)
+    let cart = buildCart(user.id, body.network)
     if (cart.items.length === 0) return fail(409, 'empty_cart', 'Seu carrinho está vazio')
+
+    // cenários: o catálogo muda bem na hora da compra (e avisa pelo socket, como no mundo real)
+    const first = cart.items[0]
+    if (consumeOnce('price-change')) {
+      updateNft(first.nft.id, { price: fromUnits(toUnits(first.nft.price) + toUnits('0.1')) })
+      cart = buildCart(user.id, body.network)
+    }
+    if (consumeOnce('sold-out')) {
+      updateNft(first.nft.id, { stock: 0, editionId: first.editionId })
+      cart = buildCart(user.id, body.network)
+    }
 
     const soldOut = cart.items.find(
       ({ nft, editionId, quantity }) => quantity > (editionOf(nft, editionId)?.stock ?? 0),
@@ -140,7 +160,12 @@ export const orderHandlers = [
       quote: cart.quote,
       network: body.network,
       wallet: { label: wallet.label, address: wallet.address },
-      collector: { name: body.collector.name.trim(), email: body.collector.email },
+      collector: {
+        name: body.collector.name.trim(),
+        username: body.collector.username,
+        email: body.collector.email,
+        notes: (body.collector.notes ?? '').trim(),
+      },
       txHash: null,
       declineReason: null,
     }
@@ -148,7 +173,10 @@ export const orderHandlers = [
     db.orders[id] = {
       order,
       userId: user.id,
-      outcome: body.network === DECLINING_NETWORK ? 'declined' : 'confirmed',
+      outcome:
+        body.network === DECLINING_NETWORK || currentScenario() === 'payment-declined'
+          ? 'declined'
+          : 'confirmed',
       resolveAt: Date.now() + CONFIRM_AFTER_MS,
     }
     db.idempotency[slot] = { hash, orderId: id }

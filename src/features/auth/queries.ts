@@ -45,6 +45,11 @@ export function useLogin() {
 }
 
 export function logout() {
+  // avisa a API (sem esperar); o cabeçalho é montado agora porque o token sai já em seguida
+  const token = getToken()
+  if (token) {
+    api.post('/auth/logout', null, { headers: { Authorization: `Bearer ${token}` } }).catch(() => {})
+  }
   clearToken()
   // limpa tudo para não sobrar dado privado do usuário anterior
   queryClient.clear()

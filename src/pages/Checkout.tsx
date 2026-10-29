@@ -28,7 +28,14 @@ const networks: { id: NetworkId; label: string }[] = [
   { id: 'arbitrum', label: 'Arbitrum' },
 ]
 
-type Form = { name: string; email: string; walletId: string; network: NetworkId }
+type Form = {
+  name: string
+  username: string
+  email: string
+  notes: string
+  walletId: string
+  network: NetworkId
+}
 
 const formKey = (userId: string) => `checkout-form:${userId}`
 
@@ -40,7 +47,7 @@ function loadForm(userId: string): Form {
   } catch {
     // usa o valor padrão
   }
-  return { name: '', email: '', walletId: '', network: 'ethereum' }
+  return { name: '', username: '', email: '', notes: '', walletId: '', network: 'ethereum' }
 }
 
 export function Checkout() {
@@ -70,7 +77,14 @@ function CheckoutFlow({
 
   const [form, setForm] = useState<Form>(() => {
     const saved = loadForm(userId)
-    return { ...saved, name: saved.name || userName, email: saved.email || userEmail }
+    return {
+      ...saved,
+      name: saved.name || userName,
+      email: saved.email || userEmail,
+      // sugestão de usuário a partir do e-mail; dá para editar
+      username: saved.username || userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20),
+      notes: saved.notes ?? '',
+    }
   })
   const [step, setStep] = useState<'form' | 'review'>('form')
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -86,6 +100,10 @@ function CheckoutFlow({
   const quote = useQuote(userId, form.network, step === 'review')
 
   const currentTotal = quote.data?.quote.total ?? null
+  // se um item perdeu estoque (evento em tempo real), a compra fica bloqueada até ajustar o carrinho
+  const unavailable = quote.data?.items.find(
+    ({ nft, editionId, quantity }) => quantity > (editionOf(nft, editionId)?.stock ?? 0),
+  )
   const stale = reviewed !== null && currentTotal !== null && currentTotal !== reviewed
 
   useEffect(() => {
@@ -99,7 +117,9 @@ function CheckoutFlow({
   async function goToReview() {
     const next: Record<string, string> = {}
     if (!form.name.trim()) next.name = 'Informe o nome completo'
+    if (!/^[a-zA-Z0-9_]{3,20}$/.test(form.username)) next.username = 'Use de 3 a 20 letras, números ou _'
     if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'Digite um e-mail válido'
+    if (form.notes.length > 280) next.notes = 'Use até 280 caracteres'
     if (!connected) next.wallet = 'Conecte a carteira escolhida para continuar'
     setErrors(next)
     if (Object.keys(next).length) return
@@ -116,7 +136,7 @@ function CheckoutFlow({
 
   function confirm() {
     // evita pedido duplicado em cliques repetidos
-    if (sending.current || !quote.data || stale) return
+    if (sending.current || !quote.data || stale || unavailable) return
     sending.current = true
 
     createOrder.mutate(
@@ -124,7 +144,12 @@ function CheckoutFlow({
         walletId,
         network: form.network,
         expectedTotal: quote.data.quote.total,
-        collector: { name: form.name.trim(), email: form.email },
+        collector: {
+          name: form.name.trim(),
+          username: form.username,
+          email: form.email,
+          notes: form.notes.trim(),
+        },
       },
       {
         onSuccess: (order) => {
@@ -212,6 +237,14 @@ function CheckoutFlow({
               autoComplete="name"
             />
             <Field
+              id="usuario"
+              label="Nome de usuário"
+              value={form.username}
+              error={errors.username}
+              onChange={(value) => set('username', value)}
+              autoComplete="username"
+            />
+            <Field
               id="email"
               label="E-mail"
               type="email"
@@ -220,6 +253,29 @@ function CheckoutFlow({
               onChange={(value) => set('email', value)}
               autoComplete="email"
             />
+            <div>
+              <label htmlFor="observacao" className="mb-1 block text-sm">
+                Observação do colecionador (opcional)
+              </label>
+              <textarea
+                id="observacao"
+                rows={3}
+                maxLength={300}
+                value={form.notes}
+                onChange={(event) => set('notes', event.target.value)}
+                aria-invalid={!!errors.notes}
+                aria-describedby={errors.notes ? 'observacao-erro' : 'observacao-ajuda'}
+                className="w-full rounded border border-input bg-card px-3 py-2 text-sm"
+              />
+              <p id="observacao-ajuda" className="mt-1 text-xs text-muted-foreground">
+                {form.notes.length}/280 caracteres
+              </p>
+              {errors.notes && (
+                <p id="observacao-erro" className="mt-1 text-sm text-destructive">
+                  {errors.notes}
+                </p>
+              )}
+            </div>
           </fieldset>
 
           <fieldset>
@@ -243,7 +299,12 @@ function CheckoutFlow({
                       onChange={() => set('walletId', wallet.id)}
                     />
                     <span className="flex-1">
-                      <span className="block text-sm font-medium">{wallet.label}</span>
+                      <span className="block text-sm font-medium">
+                        {wallet.label}{' '}
+                        <span className="font-normal text-muted-foreground">
+                          ({wallet.primary ? 'principal' : 'secundária'})
+                        </span>
+                      </span>
                       <span className="block font-mono text-xs text-muted-foreground">
                         {wallet.address.slice(0, 8)}…{wallet.address.slice(-6)}
                       </span>
@@ -311,8 +372,14 @@ function CheckoutFlow({
           <dl className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-card p-4 text-sm">
             <dt className="text-muted-foreground">Colecionador</dt>
             <dd>
-              {form.name} · {form.email}
+              {form.name} (@{form.username}) · {form.email}
             </dd>
+            {form.notes.trim() && (
+              <>
+                <dt className="text-muted-foreground">Observação</dt>
+                <dd className="break-words">{form.notes.trim()}</dd>
+              </>
+            )}
             <dt className="text-muted-foreground">Carteira</dt>
             <dd>{wallets.find((item) => item.id === walletId)?.label}</dd>
             <dt className="text-muted-foreground">Rede</dt>
@@ -353,6 +420,15 @@ function CheckoutFlow({
           )}
 
           <div aria-live="polite" className="space-y-2 text-sm">
+            {unavailable && (
+              <p role="alert" className="rounded border border-destructive p-3 text-destructive">
+                {unavailable.nft.name} ({editionOf(unavailable.nft, unavailable.editionId)?.label})
+                não está mais disponível na quantidade escolhida.{' '}
+                <Link to="/cart" className="underline">
+                  Ajustar carrinho
+                </Link>
+              </p>
+            )}
             {stale && currentTotal && (
               <div role="alert" className="flex flex-wrap items-center gap-3 rounded border border-primary p-3">
                 <p className="flex-1">
@@ -395,7 +471,7 @@ function CheckoutFlow({
             </button>
             <button
               onClick={confirm}
-              disabled={createOrder.isPending || !quote.data || stale}
+              disabled={createOrder.isPending || !quote.data || stale || !!unavailable}
               className="flex-1 rounded bg-primary py-3 font-medium text-primary-foreground disabled:opacity-50"
             >
               {createOrder.isPending

@@ -143,6 +143,22 @@
   outline-offset: 2px;
 }
 
+/* superfícies que o navegador desenha: seleção, cursor, rádios e barras de rolagem */
+:root {
+  accent-color: var(--primary);
+}
+html {
+  scrollbar-color: var(--border) var(--background);
+}
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+input,
+textarea {
+  caret-color: var(--primary);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

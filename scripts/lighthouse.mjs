@@ -92,9 +92,14 @@ for (const [profile, overrides] of Object.entries(profiles)) {
 
 stop()
 
+// versão exata do navegador usado nas medições
+const probe = await chromium.launch()
+const chromiumVersion = `Chromium ${probe.version()} (Playwright)`
+await probe.close()
+
 const meta = {
   lighthouse: JSON.parse(readFileSync(new URL('../node_modules/lighthouse/package.json', import.meta.url))).version,
-  chromium: chromium.executablePath().split('/').slice(-4)[0],
+  chromium: chromiumVersion,
   node: process.version,
   os: `${os.type()} ${os.release()} ${os.arch()}`,
   cpus: os.cpus().length,

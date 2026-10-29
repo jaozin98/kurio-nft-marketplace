@@ -128,3 +128,14 @@ test('evento de pedido de outro usuário não é aplicado', async ({ page }) => 
   await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
   await expect(page.getByRole('heading', { name: 'Pagamento recusado' })).toHaveCount(0)
 })
+
+test('relógio controlado: o pedido pendente confirma quando o tempo avança', async ({ page }) => {
+  await page.clock.install()
+  await pendingOrder(page)
+  await expect(page.getByRole('heading', { name: 'Aguardando confirmação' })).toBeVisible()
+
+  // em vez de esperar os 2s reais da simulação, avança o relógio da página
+  await page.clock.fastForward(5000)
+  await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 4000 })
+  expect(await orderCount(page)).toBe(1)
+})

@@ -26,7 +26,7 @@ export function RelatedNfts({
       <h2 id="relacionados-titulo" className="mb-6 border-b border-border pb-2 text-lg font-bold">
         {title}
       </h2>
-      <ul className="grid grid-cols-2 gap-4 md:grid-cols-5">
+      <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         {isPending
           ? Array.from({ length: 5 }, (_, i) => (
               <li key={i}>

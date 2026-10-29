@@ -128,14 +128,22 @@ export type Order = {
   quote: Quote
   network: NetworkId
   wallet: { label: string; address: string }
-  collector: { name: string; email: string }
+  collector: Collector
   txHash: string | null
   declineReason: string | null
+}
+
+// campos do formulário de pagamento do Figma
+export type Collector = {
+  name: string
+  username: string
+  email: string
+  notes: string
 }
 
 export type OrderRequest = {
   walletId: string
   network: NetworkId
   expectedTotal: string
-  collector: { name: string; email: string }
+  collector: Collector
 }

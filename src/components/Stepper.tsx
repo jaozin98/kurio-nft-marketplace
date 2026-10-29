@@ -1,5 +1,7 @@
+import { MinusIcon, PlusIcon } from './icons'
+
 const round =
-  'grid size-7 place-items-center rounded-full bg-primary text-base font-bold leading-none text-primary-foreground disabled:opacity-40'
+  'grid size-8 place-items-center rounded-full bg-primary text-primary-foreground disabled:opacity-40'
 
 type StepperProps = {
   value: number
@@ -20,7 +22,7 @@ export function Stepper({ value, min = 1, max, onChange, label = 'Quantidade', d
         aria-label="Diminuir quantidade"
         className={round}
       >
-        −
+        <MinusIcon className="size-4" />
       </button>
       <output aria-live="polite" className="min-w-4 text-center text-base">
         {value}
@@ -31,7 +33,7 @@ export function Stepper({ value, min = 1, max, onChange, label = 'Quantidade', d
         aria-label="Aumentar quantidade"
         className={round}
       >
-        +
+        <PlusIcon className="size-4" />
       </button>
     </div>
   )

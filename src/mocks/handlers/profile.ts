@@ -15,6 +15,13 @@ const MAX_AVATAR_BYTES = 150_000
 const AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 
 export const profileHandlers = [
+  http.get('/api/profile', async ({ request }) => {
+    await delay(150)
+    const account = getUser(request)
+    if (!account) return unauthorized()
+    return HttpResponse.json(publicUser(account))
+  }),
+
   http.patch('/api/profile', async ({ request }) => {
     await delay(300)
     const account = getUser(request)

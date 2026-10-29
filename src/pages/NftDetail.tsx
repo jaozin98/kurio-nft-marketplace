@@ -26,7 +26,7 @@ export function NftDetail() {
   if (isPending) {
     // mesmas proporções da página carregada, para o layout não pular
     return (
-      <div className="grid gap-8 py-8 lg:grid-cols-2" aria-busy="true">
+      <div className="grid gap-8 py-8 md:grid-cols-2" aria-busy="true">
         <div className="shimmer aspect-square rounded-lg" />
         <div className="space-y-4">
           <div className="shimmer h-8 w-2/3 rounded" />
@@ -98,9 +98,9 @@ function NftView({ nft }: { nft: Nft }) {
         </Link>
       </nav>
 
-      <div className="mt-4 grid gap-8 lg:grid-cols-2">
-        <div className="flex flex-col-reverse gap-4 md:flex-row">
-          <ul className="flex shrink-0 gap-3 md:w-[88px] md:flex-col">
+      <div className="mt-4 grid items-start gap-8 md:grid-cols-2">
+        <div className="flex flex-col-reverse gap-4 xl:flex-row">
+          <ul className="flex shrink-0 gap-3 xl:w-[88px] xl:flex-col">
             {nft.gallery.map((src, index) => (
               <li key={index}>
                 <button
@@ -111,7 +111,7 @@ function NftView({ nft }: { nft: Nft }) {
                     index === selected ? 'border-primary' : 'border-transparent'
                   }`}
                 >
-                  <img src={src} alt="" width={88} height={88} className="size-[72px] object-cover md:size-[88px]" />
+                  <img src={src} alt="" width={88} height={88} className="size-[72px] object-cover xl:size-[88px]" />
                 </button>
               </li>
             ))}
@@ -191,11 +191,11 @@ function NftView({ nft }: { nft: Nft }) {
               disabled={stock === 0}
             />
 
-            <div className="ml-auto flex gap-3">
+            <div className="flex w-full gap-3 sm:ml-auto sm:w-auto">
               <button
                 onClick={() => addToCart.mutate({ nftId: nft.id, editionId, quantity })}
                 disabled={stock === 0 || addToCart.isPending}
-                className="rounded bg-primary px-6 py-2 text-base font-bold text-primary-foreground disabled:opacity-50"
+                className="flex-1 rounded bg-primary px-6 py-2 text-base font-bold text-primary-foreground disabled:opacity-50 sm:flex-none"
               >
                 {stock === 0 ? 'Edição esgotada' : addToCart.isPending ? 'Adicionando…' : 'COMPRAR'}
               </button>
@@ -203,7 +203,7 @@ function NftView({ nft }: { nft: Nft }) {
               <button
                 onClick={onFavorite}
                 aria-pressed={isFavorite}
-                className="flex items-center gap-2 rounded border border-primary px-4 py-2 text-base text-primary"
+                className="flex flex-1 items-center justify-center gap-2 rounded border border-primary px-4 py-2 text-base text-primary sm:flex-none"
               >
                 <HeartIcon filled={isFavorite} className="size-4" />
                 Favoritar

@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { FiltersPanel } from '@/components/FiltersPanel'
-import { SearchIcon } from '@/components/icons'
+import { ChevronRightIcon, CloseIcon, SearchIcon } from '@/components/icons'
 import { NftCard, NftCardSkeleton } from '@/components/NftCard'
 import { useFeaturedNft, useFilterMeta, useNftList } from '@/features/nfts/queries'
 import { formatEth } from '@/lib/eth'
@@ -93,9 +93,9 @@ export function Home() {
               <button
                 onClick={() => drawer.current?.close()}
                 aria-label="Fechar filtros"
-                className="size-9 rounded border border-border"
+                className="grid size-9 place-items-center rounded border border-border"
               >
-                ✕
+                <CloseIcon className="size-4" />
               </button>
             </div>
             <FiltersPanel idPrefix="gaveta" meta={meta} filters={filters} onChange={update} />
@@ -124,13 +124,13 @@ export function Home() {
           </div>
 
           <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-            <div role="group" aria-label="Visualização" className="flex flex-wrap gap-x-6 gap-y-2">
+            <div role="group" aria-label="Visualização" className="flex flex-wrap gap-x-4 gap-y-2 md:gap-x-6">
               {tabs.map((tab) => (
                 <button
                   key={tab.value}
                   onClick={() => update({ tab: tab.value })}
                   aria-pressed={search.tab === tab.value}
-                  className={`border-b-2 pb-1 text-base ${
+                  className={`border-b-2 pb-1 text-sm md:text-base ${
                     search.tab === tab.value
                       ? 'border-primary font-bold text-primary'
                       : 'border-transparent hover:text-primary'
@@ -218,9 +218,9 @@ export function Home() {
                 }
                 disabled={search.page >= totalPages}
                 aria-label="Próxima página"
-                className="size-9 rounded border border-border text-sm hover:border-primary disabled:opacity-40"
+                className="grid size-9 place-items-center rounded border border-border hover:border-primary disabled:opacity-40"
               >
-                ›
+                <ChevronRightIcon className="size-4" />
               </button>
             </nav>
           )}
@@ -236,12 +236,12 @@ function Hero() {
   return (
     <section
       aria-labelledby="hero-titulo"
-      className="grid items-center gap-8 py-8 md:grid-cols-[1fr_368px] md:py-12"
+      className="grid items-center gap-8 py-8 md:grid-cols-[1fr_300px] md:py-12 lg:grid-cols-[1fr_368px]"
     >
       <div className="space-y-5">
         <p className="text-sm font-medium tracking-[0.1em]">Bem-vindo à Kurio</p>
-        <h1 id="hero-titulo" className="max-w-[600px] text-3xl font-bold md:text-[43px] md:leading-[70px]">
-          SEJA DONO DO FUTURO <br className="hidden md:inline" />
+        <h1 id="hero-titulo" className="max-w-[600px] text-balance text-3xl font-bold md:text-4xl md:leading-[1.3] lg:text-[43px] lg:leading-[70px]">
+          SEJA DONO DO FUTURO <br className="hidden lg:inline" />
           DA ARTE DIGITAL
         </h1>
         <p className="max-w-[557px] text-sm leading-6 text-muted-foreground">
@@ -258,12 +258,12 @@ function Hero() {
       </div>
 
       {isPending ? (
-        <div aria-hidden className="shimmer aspect-square w-full rounded-lg md:justify-self-end" />
+        <div aria-hidden className="shimmer aspect-[4/3] w-full rounded-lg md:aspect-square md:justify-self-end" />
       ) : featured ? (
         <Link
           to="/nft/$id"
           params={{ id: featured.id }}
-          className="block aspect-square w-full overflow-hidden rounded-lg md:justify-self-end"
+          className="block aspect-[4/3] w-full overflow-hidden rounded-lg md:aspect-square md:justify-self-end"
         >
           <img
             src={featured.image}
@@ -271,7 +271,7 @@ function Hero() {
             width={368}
             height={368}
             fetchPriority="high"
-            className="size-full object-cover"
+            className="size-full object-cover object-top"
           />
         </Link>
       ) : null}

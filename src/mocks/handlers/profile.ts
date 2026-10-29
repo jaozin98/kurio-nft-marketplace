@@ -1,14 +1,15 @@
 import { delay, http, HttpResponse } from 'msw'
 import { save } from '../db'
 import { sha256 } from '../hash'
+import { validateProfile } from '@/lib/validation'
 import {
   conflict,
-  emailPattern,
   emailTaken,
   getUser,
   invalid,
   publicUser,
   unauthorized,
+  usernameTaken,
 } from './auth'
 
 const MAX_AVATAR_BYTES = 150_000
@@ -27,19 +28,30 @@ export const profileHandlers = [
     const account = getUser(request)
     if (!account) return unauthorized()
 
-    const body = (await request.json()) as { name: string; email: string }
-    const name = String(body.name ?? '').trim()
-    const email = String(body.email ?? '').trim()
+    const body = (await request.json()) as {
+      name: string
+      username: string
+      email: string
+      ens: string
+      walletNickname: string
+    }
+    const values = {
+      name: String(body.name ?? '').trim(),
+      username: String(body.username ?? '').trim(),
+      email: String(body.email ?? '').trim(),
+      ens: String(body.ens ?? '').trim(),
+      walletNickname: String(body.walletNickname ?? '').trim(),
+    }
 
-    const errors: Record<string, string> = {}
-    if (name.length < 2) errors.name = 'Informe seu nome completo'
-    if (!emailPattern.test(email)) errors.email = 'Digite um e-mail válido'
+    const errors = validateProfile(values)
     if (Object.keys(errors).length) return invalid(errors)
 
-    if (emailTaken(email, account.id)) return conflict('email', 'Este e-mail já está em uso')
+    if (emailTaken(values.email, account.id)) return conflict('email', 'Este e-mail já está em uso')
+    if (usernameTaken(values.username, account.id)) {
+      return conflict('username', 'Este nome de usuário já está em uso')
+    }
 
-    account.name = name
-    account.email = email
+    Object.assign(account, values)
     save()
     return HttpResponse.json(publicUser(account))
   }),

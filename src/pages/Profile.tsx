@@ -1,5 +1,6 @@
 import { useRef, useState, type FormEvent } from 'react'
-import { Field } from '@/components/Field'
+import { AccountLayout } from '@/components/AccountLayout'
+import { Field, PasswordField } from '@/components/Field'
 import { Private } from '@/components/Private'
 import {
   useChangePassword,
@@ -8,18 +9,16 @@ import {
   useUploadAvatar,
 } from '@/features/profile/queries'
 import { errorMessage, fieldErrors } from '@/lib/api'
+import { validateProfile } from '@/lib/validation'
 import type { User } from '@/types'
 
 export function Profile() {
   return (
     <Private to="/profile">
       {(user) => (
-        <div className="mx-auto max-w-xl space-y-12 py-8">
-          <h1 className="text-3xl font-bold">Perfil do colecionador</h1>
-          <AvatarSection user={user} />
-          <DataSection user={user} />
-          <PasswordSection />
-        </div>
+        <AccountLayout active="profile">
+          <ProfileForm user={user} />
+        </AccountLayout>
       )}
     </Private>
   )
@@ -28,162 +27,167 @@ export function Profile() {
 const MAX_AVATAR_BYTES = 150_000
 const AVATAR_TYPES = ['image/png', 'image/jpeg', 'image/webp']
 
-function AvatarSection({ user }: { user: User }) {
+function ProfileForm({ user }: { user: User }) {
+  const update = useUpdateProfile()
+  const changePassword = useChangePassword()
   const upload = useUploadAvatar()
   const remove = useRemoveAvatar()
-  const input = useRef<HTMLInputElement>(null)
-  const [localError, setLocalError] = useState<string | null>(null)
+  const picker = useRef<HTMLInputElement>(null)
 
-  function onPick(file: File | undefined) {
-    setLocalError(null)
+  const [values, setValues] = useState({
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    ens: user.ens,
+    walletNickname: user.walletNickname,
+  })
+  const empty = { current: '', next: '', confirm: '' }
+  const [password, setPassword] = useState(empty)
+  const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
+  const [avatarError, setAvatarError] = useState<string | null>(null)
+  const [saved, setSaved] = useState<string[]>([])
+
+  const apiErrors = { ...fieldErrors(update.error), ...fieldErrors(changePassword.error) }
+  const errors: Record<string, string | undefined> = { ...apiErrors, ...clientErrors }
+
+  const set = (field: keyof typeof values) => (value: string) =>
+    setValues((current) => ({ ...current, [field]: value }))
+
+  function pickAvatar(file: File | undefined) {
+    setAvatarError(null)
     if (!file) return
-    if (!AVATAR_TYPES.includes(file.type)) return setLocalError('Use uma imagem PNG, JPG ou WebP')
-    if (file.size > MAX_AVATAR_BYTES) return setLocalError('A imagem passa de 150 KB')
+    if (!AVATAR_TYPES.includes(file.type)) return setAvatarError('Use uma imagem PNG, JPG ou WebP')
+    if (file.size > MAX_AVATAR_BYTES) return setAvatarError('A imagem passa de 150 KB')
 
     const reader = new FileReader()
     reader.onload = () => upload.mutate(String(reader.result))
     reader.readAsDataURL(file)
   }
 
-  const apiError = fieldErrors(upload.error).avatar
-  const error = localError ?? apiError ?? (upload.isError ? errorMessage(upload.error) : null)
+  function onSubmit(event: FormEvent) {
+    event.preventDefault()
+    setSaved([])
+
+    const next = validateProfile(values)
+    const wantsPassword = !!(password.current || password.next || password.confirm)
+    if (wantsPassword) {
+      if (!password.current) next.currentPassword = 'Informe a senha atual'
+      if (password.next.length < 8) next.newPassword = 'A nova senha precisa ter ao menos 8 caracteres'
+      if (password.confirm !== password.next) next.confirm = 'As senhas não são iguais'
+    }
+    setClientErrors(next)
+    if (Object.keys(next).length) return
+
+    update.mutate(values, {
+      onSuccess: () => {
+        setSaved((list) => [...list, 'Dados salvos.'])
+        if (!wantsPassword) return
+        changePassword.mutate(
+          { currentPassword: password.current, newPassword: password.next },
+          {
+            onSuccess: () => {
+              setPassword(empty)
+              setSaved((list) => [...list, 'Senha alterada.'])
+            },
+          },
+        )
+      },
+    })
+  }
+
+  const avatarMessage =
+    avatarError ?? fieldErrors(upload.error).avatar ?? (upload.isError ? errorMessage(upload.error) : null)
+  const generalError = [update.error, changePassword.error].find(
+    (error) => error && Object.keys(fieldErrors(error)).length === 0,
+  )
+  const busy = update.isPending || changePassword.isPending
 
   return (
-    <section aria-labelledby="avatar-titulo">
-      <h2 id="avatar-titulo" className="text-lg font-semibold">
-        Avatar
-      </h2>
-      <div className="mt-4 flex items-center gap-4">
-        {user.avatar ? (
-          <img src={user.avatar} alt={`Avatar de ${user.name}`} className="size-20 rounded-full object-cover" />
-        ) : (
-          <div aria-hidden className="grid size-20 place-items-center rounded-full bg-muted text-2xl">
-            {user.name.slice(0, 1).toUpperCase()}
-          </div>
-        )}
+    <form onSubmit={onSubmit} noValidate aria-labelledby="perfil-titulo" className="space-y-8">
+      <h1 id="perfil-titulo" className="text-xl font-bold">
+        Perfil do colecionador
+      </h1>
 
-        <div className="space-y-2">
-          <input
-            ref={input}
-            id="avatar"
-            type="file"
-            accept={AVATAR_TYPES.join(',')}
-            onChange={(event) => onPick(event.target.files?.[0])}
-            className="sr-only"
-          />
-          <label
-            htmlFor="avatar"
-            className="inline-block cursor-pointer rounded border border-primary px-4 py-2 text-sm text-primary focus-within:outline-2"
-          >
-            {upload.isPending ? 'Enviando…' : 'Escolher imagem'}
-          </label>
-          {user.avatar && (
+      <div className="grid gap-x-6 gap-y-5 md:grid-cols-2">
+        <Field id="perfil-nome" label="Nome de exibição" required value={values.name} error={errors.name} onChange={set('name')} autoComplete="name" />
+        <Field id="perfil-usuario" label="Nome de usuário" required value={values.username} error={errors.username} onChange={set('username')} autoComplete="username" />
+        <Field id="perfil-email" label="E-mail" required type="email" value={values.email} error={errors.email} onChange={set('email')} autoComplete="email" />
+        <Field id="perfil-ens" label="Nome ENS" required prefix=".eth" value={values.ens} error={errors.ens} onChange={set('ens')} />
+        <Field id="perfil-apelido" label="Apelido da carteira" required value={values.walletNickname} error={errors.walletNickname} onChange={set('walletNickname')} />
+
+        <div>
+          <p id="avatar-rotulo" className="mb-1.5 text-sm">
+            Avatar
+          </p>
+          <div aria-labelledby="avatar-rotulo" className="flex items-center gap-4">
+            {user.avatar ? (
+              <img src={user.avatar} alt={`Avatar de ${user.name}`} className="size-14 rounded-full object-cover" />
+            ) : (
+              <div aria-hidden className="grid size-14 place-items-center rounded-full bg-card text-xl text-primary">
+                {user.name.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+            <input
+              ref={picker}
+              type="file"
+              accept={AVATAR_TYPES.join(',')}
+              aria-label="Arquivo do avatar"
+              onChange={(event) => pickAvatar(event.target.files?.[0])}
+              className="sr-only"
+            />
             <button
-              onClick={() => remove.mutate()}
-              disabled={remove.isPending}
-              className="ml-3 text-sm text-muted-foreground underline"
+              type="button"
+              onClick={() => picker.current?.click()}
+              disabled={upload.isPending}
+              className="rounded bg-primary px-5 py-2 text-sm font-bold text-primary-foreground disabled:opacity-60"
             >
-              Remover
+              {upload.isPending ? 'Enviando…' : 'Alterar'}
             </button>
-          )}
-          <p className="text-xs text-muted-foreground">PNG, JPG ou WebP, até 150 KB.</p>
+            {user.avatar && (
+              <button type="button" onClick={() => remove.mutate()} disabled={remove.isPending} className="text-sm underline">
+                Remover
+              </button>
+            )}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">PNG, JPG ou WebP, até 150 KB.</p>
+          <div aria-live="polite" className="text-sm">
+            {avatarMessage && (
+              <p role="alert" className="text-destructive">
+                {avatarMessage}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-      <div aria-live="polite" className="mt-2 min-h-5 text-sm">
-        {error && <p role="alert" className="text-destructive">{error}</p>}
-      </div>
-    </section>
-  )
-}
 
-function DataSection({ user }: { user: User }) {
-  const update = useUpdateProfile()
-  const [form, setForm] = useState({ name: user.name, email: user.email })
-  const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
-  const errors = { ...fieldErrors(update.error), ...clientErrors }
+      <fieldset className="space-y-5">
+        <legend className="mb-4 text-lg font-bold">Alterar senha</legend>
+        <div className="grid max-w-md gap-5">
+          <PasswordField id="senha-atual" label="Senha atual" autoComplete="current-password" value={password.current} onChange={(v) => setPassword({ ...password, current: v })} error={errors.currentPassword} />
+          <PasswordField id="senha-nova" label="Nova senha" autoComplete="new-password" value={password.next} onChange={(v) => setPassword({ ...password, next: v })} error={errors.newPassword} />
+          <PasswordField id="senha-confirmar" label="Confirmar nova senha" autoComplete="new-password" value={password.confirm} onChange={(v) => setPassword({ ...password, confirm: v })} error={errors.confirm} />
+        </div>
+      </fieldset>
 
-  function onSubmit(event: FormEvent) {
-    event.preventDefault()
-    const next: Record<string, string> = {}
-    if (form.name.trim().length < 2) next.name = 'Informe seu nome completo'
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'Digite um e-mail válido'
-    setClientErrors(next)
-    if (Object.keys(next).length) return
-    update.mutate(form)
-  }
-
-  return (
-    <form onSubmit={onSubmit} noValidate aria-labelledby="dados-titulo" className="space-y-4">
-      <h2 id="dados-titulo" className="text-lg font-semibold">
-        Dados pessoais
-      </h2>
-      <Field id="perfil-nome" label="Nome completo" value={form.name} error={errors.name} onChange={(v) => setForm({ ...form, name: v })} autoComplete="name" />
-      <Field id="perfil-email" label="E-mail" type="email" value={form.email} error={errors.email} onChange={(v) => setForm({ ...form, email: v })} autoComplete="email" />
-
-      <div aria-live="polite" className="min-h-5 text-sm">
-        {update.isSuccess && <p className="text-primary">Dados salvos.</p>}
-        {update.isError && Object.keys(errors).length === 0 && (
-          <p role="alert" className="text-destructive">{errorMessage(update.error)}</p>
+      <div aria-live="polite" className="space-y-1 text-sm">
+        {saved.map((message) => (
+          <p key={message} className="text-primary">
+            {message}
+          </p>
+        ))}
+        {generalError && (
+          <p role="alert" className="text-destructive">
+            {errorMessage(generalError)}
+          </p>
         )}
       </div>
 
       <button
         type="submit"
-        disabled={update.isPending}
-        className="rounded bg-primary px-5 py-2 font-medium text-primary-foreground disabled:opacity-60"
+        disabled={busy}
+        className="rounded bg-primary px-8 py-2.5 text-sm font-bold text-primary-foreground disabled:opacity-60"
       >
-        {update.isPending ? 'Salvando…' : 'Salvar dados'}
-      </button>
-    </form>
-  )
-}
-
-function PasswordSection() {
-  const change = useChangePassword()
-  const empty = { current: '', next: '', confirm: '' }
-  const [form, setForm] = useState(empty)
-  const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
-  const api = fieldErrors(change.error)
-  const errors = {
-    currentPassword: api.currentPassword,
-    newPassword: api.newPassword,
-    ...clientErrors,
-  }
-
-  function onSubmit(event: FormEvent) {
-    event.preventDefault()
-    const next: Record<string, string> = {}
-    if (!form.current) next.currentPassword = 'Informe a senha atual'
-    if (form.next.length < 8) next.newPassword = 'A nova senha precisa ter ao menos 8 caracteres'
-    if (form.confirm !== form.next) next.confirm = 'As senhas não são iguais'
-    setClientErrors(next)
-    if (Object.keys(next).length) return
-
-    change.mutate(
-      { currentPassword: form.current, newPassword: form.next },
-      { onSuccess: () => setForm(empty) },
-    )
-  }
-
-  return (
-    <form onSubmit={onSubmit} noValidate aria-labelledby="senha-titulo" className="space-y-4">
-      <h2 id="senha-titulo" className="text-lg font-semibold">
-        Alterar senha
-      </h2>
-      <Field id="senha-atual" label="Senha atual" type="password" value={form.current} error={errors.currentPassword} onChange={(v) => setForm({ ...form, current: v })} autoComplete="current-password" />
-      <Field id="senha-nova" label="Nova senha" type="password" value={form.next} error={errors.newPassword} onChange={(v) => setForm({ ...form, next: v })} autoComplete="new-password" />
-      <Field id="senha-confirmar" label="Confirmar nova senha" type="password" value={form.confirm} error={clientErrors.confirm} onChange={(v) => setForm({ ...form, confirm: v })} autoComplete="new-password" />
-
-      <div aria-live="polite" className="min-h-5 text-sm">
-        {change.isSuccess && <p className="text-primary">Senha alterada.</p>}
-      </div>
-
-      <button
-        type="submit"
-        disabled={change.isPending}
-        className="rounded border border-primary px-5 py-2 font-medium text-primary disabled:opacity-60"
-      >
-        {change.isPending ? 'Alterando…' : 'Alterar senha'}
+        {busy ? 'Salvando…' : 'Salvar'}
       </button>
     </form>
   )

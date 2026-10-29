@@ -31,7 +31,7 @@ test('compra completa até o recibo confirmado', async ({ page }) => {
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
 
   await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
-  await expect(page.getByText('0.9825 ETH')).toBeVisible()
+  await expect(page.getByText('0.9825 ETH').first()).toBeVisible()
   await expect(page.getByText(/^0x[0-9a-f]{64}$/)).toBeVisible()
 
   // só o que foi comprado sai do carrinho
@@ -41,7 +41,7 @@ test('compra completa até o recibo confirmado', async ({ page }) => {
 
 test('carteira secundária recusa a conexão e bloqueia a revisão', async ({ page }) => {
   await startCheckout(page)
-  await page.getByLabel(/Carteira secundária/).check()
+  await page.getByLabel(/Reserva/).check()
   await page.getByRole('button', { name: 'Conectar carteira' }).click()
   await expect(page.getByRole('alert')).toContainText('A carteira recusou a conexão')
 
@@ -51,7 +51,7 @@ test('carteira secundária recusa a conexão e bloqueia a revisão', async ({ pa
 
 test('pagamento recusado mantém os itens no carrinho', async ({ page }) => {
   await startCheckout(page)
-  await page.getByLabel('Rede').selectOption('arbitrum')
+  await page.locator('#pgto-network').selectOption('arbitrum')
   await connectAndReview(page)
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
 
@@ -139,7 +139,9 @@ test('a compra baixa só o estoque da edição comprada', async ({ page }) => {
   await connectAndReview(page)
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
   await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
-  await expect(page.getByText('1 × Cosmic Bloom #104 (1/10)')).toBeVisible()
+  const recibo = page.getByRole('article')
+  await expect(recibo.getByText('Cosmic Bloom #104')).toBeVisible()
+  await expect(recibo.getByText(/Edição 1\/10/)).toBeVisible()
 
   // a edição 1/10 tinha 2 e agora tem 1; as demais continuam como estavam
   await page.goto('/nft/4')
@@ -184,8 +186,8 @@ test('o recibo e a revisão mostram o usuário e a observação', async ({ page 
   await startCheckout(page)
   await page.getByLabel(/Observação/).fill('Entregar na carteira principal')
   await connectAndReview(page)
-  await expect(page.getByText('(@ana)')).toBeVisible()
-  await expect(page.getByText('Entregar na carteira principal')).toBeVisible()
+  await expect(page.getByRole('dialog').getByText('(@ana)')).toBeVisible()
+  await expect(page.getByRole('dialog').getByText('Entregar na carteira principal')).toBeVisible()
 })
 
 test('cenário price-change: o preço sobe na hora da compra e exige nova confirmação', async ({ page }) => {
@@ -219,7 +221,7 @@ test('cenário sold-out: a edição esgota na hora da compra e o pedido não é 
 test('cenário session-expired: a sessão vence no envio e o checkout é retomado', async ({ page }) => {
   await useScenario(page, 'session-expired')
   await startCheckout(page)
-  await page.getByLabel('Nome completo').fill('Maria Retomada')
+  await page.getByLabel('Nome de exibição').fill('Maria Retomada')
   await connectAndReview(page)
 
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
@@ -228,7 +230,7 @@ test('cenário session-expired: a sessão vence no envio e o checkout é retomad
 
   await loginAs(page, 'ana@greenmint.test', 'senha123')
   await expect(page).toHaveURL('/checkout')
-  await expect(page.getByLabel('Nome completo')).toHaveValue('Maria Retomada')
+  await expect(page.getByLabel('Nome de exibição')).toHaveValue('Maria Retomada')
 
   await page.getByRole('button', { name: 'Revisar pedido' }).click()
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
@@ -282,6 +284,80 @@ test('compra completa a partir do catálogo, sem atalhos', async ({ page }) => {
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
 
   await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
-  await expect(page.getByText(/× Captain Ape #148/)).toBeVisible()
+  await expect(page.getByRole('article').getByText('Captain Ape #148')).toBeVisible()
   await expect(page.getByText(/^0x[0-9a-f]{64}$/)).toBeVisible()
+})
+
+test('os campos do formulário seguem o Figma e vêm preenchidos pela carteira', async ({ page }) => {
+  await startCheckout(page)
+  await expect(page.getByRole('heading', { name: 'Perfil do colecionador' })).toBeVisible()
+  await expect(page.getByLabel('Nome de exibição')).toHaveValue('Ana Souza')
+  await expect(page.getByLabel('Nome de usuário')).toHaveValue('ana')
+  await expect(page.locator('#pgto-network')).toHaveValue('ethereum')
+  await expect(page.getByLabel('Tipo de carteira')).toHaveValue('metamask')
+  await expect(page.getByLabel('Código de indicação')).toHaveValue('KURIO2026')
+  await expect(page.getByLabel('Nome ENS')).toHaveValue('ana')
+  // o endereço vem da carteira escolhida e não é editável aqui
+  await expect(page.getByLabel('Endereço da carteira')).toBeDisabled()
+})
+
+test('trocar de carteira troca rede, tipo e dados do formulário', async ({ page }) => {
+  await startCheckout(page)
+  await page.getByLabel(/Reserva/).check()
+  await expect(page.locator('#pgto-network')).toHaveValue('polygon')
+  await expect(page.getByLabel('Tipo de carteira')).toHaveValue('coinbase')
+})
+
+test('campos obrigatórios vazios mostram erro e não abrem a revisão', async ({ page }) => {
+  await startCheckout(page)
+  await page.getByLabel('Código de indicação').fill('')
+  await page.getByLabel('Nome do perfil').fill('x')
+  await page.getByRole('button', { name: 'Conectar carteira' }).click()
+  await expect(page.getByText('Conectada')).toBeVisible()
+  await page.getByRole('button', { name: 'Revisar pedido' }).click()
+
+  await expect(page.getByText('Use de 4 a 12 letras ou números')).toBeVisible()
+  await expect(page.getByText('Use de 3 a 20 letras, números ou _')).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('"Usar outra carteira?" exige o ENS ou a carteira secundária', async ({ page }) => {
+  await startCheckout(page)
+  await page.getByLabel('Usar outra carteira?').check()
+  await page.getByRole('button', { name: 'Conectar carteira' }).click()
+  await expect(page.getByText('Conectada')).toBeVisible()
+  await page.getByRole('button', { name: 'Revisar pedido' }).click()
+  await expect(page.getByText('Informe o ENS ou a carteira secundária')).toBeVisible()
+
+  await page.getByLabel('ENS ou carteira secundária (opcional)').fill('minha-conta.eth')
+  await page.getByRole('button', { name: 'Revisar pedido' }).click()
+  await expect(page.getByRole('dialog', { name: 'Revise seu pedido' })).toBeVisible()
+})
+
+test('a revisão é um modal com foco preso que volta ao formulário com Esc', async ({ page }) => {
+  await startCheckout(page)
+  await page.getByRole('button', { name: 'Conectar carteira' }).click()
+  await expect(page.getByText('Conectada')).toBeVisible()
+  await page.getByRole('button', { name: 'Revisar pedido' }).click()
+
+  const dialog = page.getByRole('dialog', { name: 'Revise seu pedido' })
+  await expect(dialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(dialog).toBeHidden()
+  await expect(page.getByRole('button', { name: 'Revisar pedido' })).toBeVisible()
+})
+
+test('o recibo mostra a faixa de dados, a tabela e o link do explorador simulado', async ({ page }) => {
+  await startCheckout(page)
+  await connectAndReview(page)
+  await page.getByRole('button', { name: 'Confirmar compra' }).click()
+  await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
+
+  await expect(page.getByText('Seus NFTs agora estão na sua carteira')).toBeVisible()
+  await expect(page.getByText('ID da transação')).toBeVisible()
+  await expect(page.getByRole('article').getByText('MetaMask')).toBeVisible()
+  await expect(page.getByText(/Transação confirmada na Ethereum/)).toBeVisible()
+
+  await page.getByRole('link', { name: 'Ver no Etherscan' }).click()
+  await expect(page.getByRole('heading', { name: /Explorador de blocos \(simulado\)/ })).toBeVisible()
 })

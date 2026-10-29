@@ -64,8 +64,11 @@ export type ApiError = {
 
 export type User = {
   id: string
-  name: string
+  name: string // nome de exibição
+  username: string
   email: string
+  ens: string // nome ENS, sem o sufixo .eth
+  walletNickname: string
   avatar: string | null
 }
 
@@ -95,10 +98,25 @@ export type Cart = {
 
 export type NetworkId = 'ethereum' | 'polygon' | 'arbitrum'
 
-export type Wallet = {
-  id: string
-  label: string
+export type Provider = 'metamask' | 'walletconnect' | 'coinbase'
+
+// os campos do formulário de carteira do Figma (os mesmos no pagamento e em Carteiras)
+export type WalletFields = {
+  displayName: string
+  profileName: string
+  network: NetworkId
   address: string
+  altAddress: string // ENS ou carteira secundária (opcional)
+  provider: Provider
+  referralCode: string
+  email: string
+  ens: string
+}
+
+export type WalletInput = WalletFields & { nickname: string }
+
+export type Wallet = WalletInput & {
+  id: string
   primary: boolean
 }
 
@@ -127,17 +145,15 @@ export type Order = {
   items: OrderItem[]
   quote: Quote
   network: NetworkId
-  wallet: { label: string; address: string }
+  wallet: { nickname: string; address: string; provider: Provider; network: NetworkId }
   collector: Collector
   txHash: string | null
   declineReason: string | null
 }
 
 // campos do formulário de pagamento do Figma
-export type Collector = {
-  name: string
+export type Collector = WalletFields & {
   username: string
-  email: string
   notes: string
 }
 

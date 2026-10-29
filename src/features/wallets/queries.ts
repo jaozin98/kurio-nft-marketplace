@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
-import type { WalletsResponse } from '@/types'
+import type { WalletInput, WalletsResponse } from '@/types'
 
 const walletsKey = (userId: string) => ['wallets', userId] as const
 
@@ -37,7 +37,7 @@ export function useDisconnectWallet(userId: string) {
 
 export function useCreateWallet(userId: string) {
   return useMutation({
-    mutationFn: async (wallet: { label: string; address: string; primary: boolean }) => {
+    mutationFn: async (wallet: WalletInput & { primary: boolean }) => {
       const { data } = await api.post<WalletsResponse>('/wallets', wallet)
       return data
     },
@@ -47,11 +47,8 @@ export function useCreateWallet(userId: string) {
 
 export function useUpdateWallet(userId: string) {
   return useMutation({
-    mutationFn: async (v: { id: string; label: string; address: string }) => {
-      const { data } = await api.patch<WalletsResponse>(`/wallets/${v.id}`, {
-        label: v.label,
-        address: v.address,
-      })
+    mutationFn: async ({ id, ...wallet }: WalletInput & { id: string }) => {
+      const { data } = await api.patch<WalletsResponse>(`/wallets/${id}`, wallet)
       return data
     },
     onSuccess: (data) => queryClient.setQueryData(walletsKey(userId), data),

@@ -1,7 +1,9 @@
 import { Link, useRouter, useSearch } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
+import { AuthField, AuthModal } from '@/components/AuthModal'
 import { useLogin } from '@/features/auth/queries'
 import { errorMessage } from '@/lib/api'
+import { Hero } from './Home'
 
 export function Login() {
   const { redirect } = useSearch({ from: '/login' })
@@ -29,74 +31,68 @@ export function Login() {
   }
 
   return (
-    <div className="mx-auto max-w-sm py-16">
-      <h1 className="text-3xl font-bold">Entrar</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Teste com ana@greenmint.test / senha123
-      </p>
+    <>
+      {/* o fundo é a Home, como no Figma; fica inerte enquanto o modal está aberto */}
+      <div aria-hidden inert className="pointer-events-none select-none opacity-40">
+        <Hero />
+      </div>
 
-      <form onSubmit={onSubmit} noValidate className="mt-8 space-y-4">
-        <div>
-          <label htmlFor="email" className="mb-1 block text-sm">
-            E-mail
-          </label>
-          <input
+      <AuthModal
+        mode="login"
+        redirect={redirect}
+        description="Entre para gerenciar sua carteira, coleção e perfil de criador."
+      >
+        <form onSubmit={onSubmit} noValidate className="space-y-4">
+          <AuthField
             id="email"
             name="email"
             type="email"
+            label="E-mail"
+            placeholder="contato@email.com"
             autoComplete="email"
-            aria-invalid={!!errors.email}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-            className="w-full rounded border border-input bg-card px-3 py-2"
+            error={errors.email}
           />
-          {errors.email && (
-            <p id="email-error" className="mt-1 text-sm text-destructive">
-              {errors.email}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="password" className="mb-1 block text-sm">
-            Senha
-          </label>
-          <input
+          <AuthField
             id="password"
             name="password"
-            type="password"
+            label="Senha"
+            placeholder="Senha"
             autoComplete="current-password"
-            aria-invalid={!!errors.password}
-            aria-describedby={errors.password ? 'password-error' : undefined}
-            className="w-full rounded border border-input bg-card px-3 py-2"
+            password
+            error={errors.password}
           />
-          {errors.password && (
-            <p id="password-error" className="mt-1 text-sm text-destructive">
-              {errors.password}
+
+          <p className="text-right text-xs">
+            <span aria-disabled="true" title="Em breve" className="cursor-not-allowed text-primary opacity-70">
+              Esqueceu a senha?
+            </span>
+          </p>
+
+          {login.isError && (
+            <p role="alert" className="text-sm text-destructive">
+              {errorMessage(login.error)}
             </p>
           )}
-        </div>
 
-        {login.isError && (
-          <p role="alert" className="text-sm text-destructive">
-            {errorMessage(login.error)}
+          <button
+            type="submit"
+            disabled={login.isPending}
+            className="w-full rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-60"
+          >
+            {login.isPending ? 'Entrando...' : 'Entrar'}
+          </button>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Conta de teste: ana@greenmint.test / senha123
           </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={login.isPending}
-          className="w-full rounded bg-primary py-2 font-medium text-primary-foreground disabled:opacity-60"
-        >
-          {login.isPending ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
-
-      <p className="mt-6 text-sm text-muted-foreground">
-        Não tem conta?{' '}
-        <Link to="/register" search={{ redirect }} className="text-primary underline">
-          Criar conta
-        </Link>
-      </p>
-    </div>
+          <p className="text-center text-sm md:hidden">
+            Novo na Kurio?{' '}
+            <Link to="/register" search={{ redirect }} className="text-primary underline">
+              Criar conta
+            </Link>
+          </p>
+        </form>
+      </AuthModal>
+    </>
   )
 }

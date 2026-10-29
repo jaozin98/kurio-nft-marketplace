@@ -79,20 +79,36 @@ export function resetDb() {
 // as contas de teste começam com carteira principal e secundária; contas novas, sem nenhuma
 // a secundária termina em "dead" e recusa a conexão (cenário fixo)
 export function walletsOf(userId: string): Wallet[] {
-  if (!users.some((seed) => seed.id === userId)) return (db.wallets[userId] ??= [])
+  const account = db.accounts[userId]
+  if (!users.some((seed) => seed.id === userId) || !account) return (db.wallets[userId] ??= [])
+
+  const base = {
+    displayName: account.name,
+    profileName: account.username,
+    altAddress: '',
+    referralCode: 'KURIO2026',
+    email: account.email,
+    ens: account.ens,
+  }
 
   return (db.wallets[userId] ??= [
     {
+      ...base,
       id: `${userId}-w1`,
-      label: 'Carteira principal',
-      address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
       primary: true,
+      nickname: 'Principal',
+      network: 'ethereum',
+      address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+      provider: 'metamask',
     },
     {
+      ...base,
       id: `${userId}-w2`,
-      label: 'Carteira secundária',
-      address: '0x9d3a5C1f0e22aD7e55Bb8d01C6F7e8B2A1c0dead',
       primary: false,
+      nickname: 'Reserva',
+      network: 'polygon',
+      address: '0x9d3a5C1f0e22aD7e55Bb8d01C6F7e8B2A1c0dead',
+      provider: 'coinbase',
     },
   ])
 }

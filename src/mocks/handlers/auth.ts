@@ -1,6 +1,7 @@
 import { delay, http, HttpResponse } from 'msw'
 import type { User } from '@/types'
 import { db, save, type Account } from '../db'
+import { isEmail, isHandle } from '@/lib/validation'
 import { sha256 } from '../hash'
 
 // o token é só "token-<id>", suficiente para o mock
@@ -30,6 +31,12 @@ export const conflict = (field: string, message: string) =>
   HttpResponse.json({ code: 'conflict', message, errors: { [field]: message } }, { status: 409 })
 
 export const emailPattern = /^\S+@\S+\.\S+$/
+
+export function usernameTaken(username: string, exceptId?: string) {
+  return Object.values(db.accounts).some(
+    (account) => account.id !== exceptId && account.username.toLowerCase() === username.toLowerCase(),
+  )
+}
 
 export function emailTaken(email: string, exceptId?: string) {
   return Object.values(db.accounts).some(
@@ -62,18 +69,24 @@ export const authHandlers = [
     const password = String(body.password ?? '')
 
     const errors: Record<string, string> = {}
-    if (name.length < 2) errors.name = 'Informe seu nome completo'
-    if (!emailPattern.test(email)) errors.email = 'Digite um e-mail válido'
+    // na tela de cadastro só há o nome de usuário; ele também vira o nome de exibição
+    if (!isHandle(name)) errors.name = 'Use de 3 a 20 letras, números ou _'
+    if (!isEmail(email)) errors.email = 'Digite um e-mail válido'
     if (password.length < 8) errors.password = 'A senha precisa ter ao menos 8 caracteres'
     if (Object.keys(errors).length) return invalid(errors)
 
     if (emailTaken(email)) return conflict('email', 'Este e-mail já está cadastrado')
+    if (usernameTaken(name)) return conflict('name', 'Este nome de usuário já está em uso')
 
     const id = `u${Object.keys(db.accounts).length + 1}`
     const account: Account = {
       id,
       name,
+      username: name,
       email,
+      // nomes ENS não aceitam sublinhado, então "marina_teste" vira "marina-teste"
+      ens: name.toLowerCase().replace(/_/g, '-').slice(0, 30),
+      walletNickname: 'Principal',
       avatar: null,
       passwordHash: await sha256(password),
     }

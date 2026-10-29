@@ -15,10 +15,10 @@ test('um usuário não vê o pedido de outro (403)', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Pedido confirmado' })).toBeVisible({ timeout: 10000 })
 
   // Bruno tenta abrir o mesmo pedido
-  await page.getByRole('button', { name: 'Sair' }).click()
+  await page.getByRole('banner').getByRole('button', { name: 'Sair' }).click()
   await page.goto('/login')
   await loginAs(page, 'bruno@greenmint.test', 'senha123')
-  await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+  await expect(page.getByRole('banner').getByRole('button', { name: 'Sair' })).toBeVisible()
   await page.goto(orderUrl)
 
   await expect(page.getByRole('alert')).toContainText('Você não tem acesso a este pedido')

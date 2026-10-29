@@ -80,8 +80,24 @@ export function createNfts(): Nft[] {
 const TEST_PASSWORD_HASH = '55a5e9e78207b4df8699d60886fa070079463547b095d1a05bc719bb4e6cd251'
 
 export const users = [
-  { id: 'u1', name: 'Ana Souza', email: 'ana@greenmint.test', passwordHash: TEST_PASSWORD_HASH },
-  { id: 'u2', name: 'Bruno Lima', email: 'bruno@greenmint.test', passwordHash: TEST_PASSWORD_HASH },
+  {
+    id: 'u1',
+    name: 'Ana Souza',
+    username: 'ana',
+    email: 'ana@greenmint.test',
+    ens: 'ana',
+    walletNickname: 'Principal',
+    passwordHash: TEST_PASSWORD_HASH,
+  },
+  {
+    id: 'u2',
+    name: 'Bruno Lima',
+    username: 'bruno',
+    email: 'bruno@greenmint.test',
+    ens: 'bruno',
+    walletNickname: 'Principal',
+    passwordHash: TEST_PASSWORD_HASH,
+  },
 ]
 
 export const coupons: Record<string, { percent: number; expired?: boolean }> = {

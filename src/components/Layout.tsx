@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from 'react'
 import { logout, useSession } from '@/features/auth/queries'
 import { useCart } from '@/features/cart/queries'
 import { CartIcon, LoginIcon, SearchIcon } from './icons'
+import { Footer } from './Footer'
 import { LiveNotices } from './LiveNotices'
 import { RealtimeSync } from './RealtimeSync'
 
@@ -14,6 +15,7 @@ const pageTitles: Record<string, string> = {
   '/register': 'Criar conta',
   '/profile': 'Perfil do colecionador',
   '/wallets': 'Carteiras',
+  '/favorites': 'Lista de interesse',
 }
 
 const navLink = 'pb-1 text-base font-medium text-foreground transition-colors hover:text-primary'
@@ -46,7 +48,7 @@ export function Layout({ children }: { children: ReactNode }) {
           KURIO
         </Link>
 
-        <nav aria-label="Principal" className="order-last flex w-full gap-6 overflow-x-auto lg:order-none lg:w-auto lg:gap-8">
+        <nav aria-label="Principal" className="order-last flex w-full flex-wrap gap-x-6 gap-y-1 lg:order-none lg:w-auto lg:flex-nowrap lg:gap-8">
           <Link
             to="/"
             activeOptions={{ exact: true, includeHash: true, includeSearch: false }}
@@ -133,43 +135,7 @@ export function Layout({ children }: { children: ReactNode }) {
       <RealtimeSync />
       <LiveNotices />
 
-      <footer className="mt-24 border-t border-border py-10 text-sm">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-base font-bold tracking-[0.15em]">KURIO</p>
-            <p className="mt-3 text-muted-foreground">
-              Marketplace de NFTs para colecionadores e criadores.
-            </p>
-          </div>
-          <nav aria-label="Minha conta">
-            <h2 className="mb-3 font-bold">Minha conta</h2>
-            <ul className="space-y-2 text-muted-foreground">
-              <li><Link to="/profile" className="hover:text-primary">Meu perfil</Link></li>
-              <li><Link to="/wallets" className="hover:text-primary">Carteiras</Link></li>
-              <li><Link to="/cart" className="hover:text-primary">Carrinho</Link></li>
-            </ul>
-          </nav>
-          <nav aria-label="Coleções">
-            <h2 className="mb-3 font-bold">Coleções</h2>
-            <ul className="space-y-2 text-muted-foreground">
-              {['Arte digital', 'Fotografia', 'Música', 'Arte 3D'].map((name) => (
-                <li key={name}>
-                  <Link to="/" search={{ collection: [name] }} hash="catalogo" className="hover:text-primary">
-                    {name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-          <div>
-            <h2 className="mb-3 font-bold">Ajuda</h2>
-            <p className="text-muted-foreground">Suporte e páginas institucionais ficam fora desta entrega.</p>
-          </div>
-        </div>
-        <p className="mt-10 text-xs text-muted-foreground">
-          © 2026 Kurio. Projeto de teste com dados simulados.
-        </p>
-      </footer>
+      <Footer />
     </div>
   )
 }

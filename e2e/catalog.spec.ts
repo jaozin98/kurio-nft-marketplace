@@ -113,3 +113,40 @@ test('clicar em um card leva ao detalhe daquele NFT', async ({ page }) => {
   await expect(page).toHaveURL(/\/nft\/\d+/)
   await expect(page.getByRole('heading', { level: 1 })).toContainText('#')
 })
+
+test('a Home tem as faixas de promoção e o Diário da Cunhagem', async ({ page }) => {
+  await expect(page.getByRole('heading', { name: 'Diário da Cunhagem' })).toBeVisible()
+  await expect(page.getByText('Como funciona a propriedade de NFTs')).toBeVisible()
+  await expect(page.getByText('12 de setembro')).toBeVisible()
+
+  // os artigos levam a páginas fora do escopo e por isso não são links
+  await expect(page.getByRole('link', { name: /Como funciona a propriedade de NFTs/ })).toHaveCount(0)
+
+  const promo = page.getByRole('region', { name: 'Destaques' })
+  await expect(promo.getByText('Lançamentos gênesis de edição limitada')).toBeVisible()
+  await promo.getByRole('link', { name: 'Explorar' }).first().click()
+  await expect(page).toHaveURL(/tab=new/)
+})
+
+test('os cards raros e lendários mostram o selo', async ({ page }) => {
+  // só dentro dos cards (o filtro de raridade também tem as palavras, em <option>)
+  await expect(region(page).getByRole('link').getByText(/^(Raro|Lendário)$/).first()).toBeVisible()
+})
+
+test('o boletim do rodapé valida o e-mail e diz que a inscrição é simulada', async ({ page }) => {
+  const campo = page.getByLabel('Receber novidades')
+  await campo.fill('invalido')
+  await page.getByRole('button', { name: 'Enviar' }).click()
+  await expect(page.getByRole('alert').filter({ hasText: 'e-mail válido' })).toBeVisible()
+
+  await campo.fill('leitor@exemplo.test')
+  await page.getByRole('button', { name: 'Enviar' }).click()
+  await expect(page.getByText('Inscrição simulada: nenhum e-mail será enviado.')).toBeVisible()
+})
+
+test('o rodapé deixa desabilitado o que está fora do escopo e liga o que existe', async ({ page }) => {
+  const footer = page.getByRole('contentinfo')
+  await expect(footer.getByText('Como comprar NFTs')).toHaveAttribute('aria-disabled', 'true')
+  await expect(footer.getByRole('link', { name: 'Lista de interesse' })).toHaveAttribute('href', '/favorites')
+  await expect(footer.getByText('© 2026 Kurio. Propriedade digital para todos.')).toBeVisible()
+})

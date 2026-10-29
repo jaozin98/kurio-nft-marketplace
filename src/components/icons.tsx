@@ -72,3 +72,37 @@ export const ChevronRightIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="m9 6 6 6-6 6" />
   </svg>
 )
+
+// ícones de marcas, em traços simples (o lucide não traz marcas)
+export const FacebookIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="M14 8h3V4h-3a4 4 0 0 0-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8Z" />
+  </svg>
+)
+
+export const InstagramIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <rect x="4" y="4" width="16" height="16" rx="5" />
+    <circle cx="12" cy="12" r="3.5" />
+    <circle cx="17" cy="7" r="0.6" fill="currentColor" />
+  </svg>
+)
+
+export const XSocialIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="m5 5 14 14M19 5 5 19" />
+  </svg>
+)
+
+export const LinkedinIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <path d="M6 10v8M6 6v.01M11 18v-8M11 13a3 3 0 0 1 6 0v5" />
+  </svg>
+)
+
+export const YoutubeIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props}>
+    <rect x="3" y="6" width="18" height="12" rx="4" />
+    <path d="m10 9.5 4.5 2.5-4.5 2.5v-5Z" fill="currentColor" />
+  </svg>
+)

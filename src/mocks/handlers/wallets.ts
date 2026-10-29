@@ -1,5 +1,6 @@
 import { delay, http, HttpResponse } from 'msw'
-import type { Wallet, WalletsResponse } from '@/types'
+import { validateWallet } from '@/lib/validation'
+import type { Wallet, WalletInput, WalletsResponse } from '@/types'
 import { db, save, walletsOf } from '../db'
 import { conflict, getUser, invalid, unauthorized } from './auth'
 
@@ -7,13 +8,20 @@ function view(userId: string): WalletsResponse {
   return { wallets: walletsOf(userId), connectedId: db.connections[userId] ?? null }
 }
 
-const addressPattern = /^0x[a-fA-F0-9]{40}$/
-
-function validate(label: string, address: string) {
-  const errors: Record<string, string> = {}
-  if (label.length < 2 || label.length > 30) errors.label = 'Use de 2 a 30 caracteres'
-  if (!addressPattern.test(address)) errors.address = 'Endereço inválido: use 0x seguido de 40 caracteres'
-  return errors
+// só os campos da carteira; o resto da requisição é ignorado
+function pick(body: Partial<WalletInput>): WalletInput {
+  return {
+    nickname: String(body.nickname ?? '').trim(),
+    displayName: String(body.displayName ?? '').trim(),
+    profileName: String(body.profileName ?? '').trim(),
+    network: body.network as WalletInput['network'],
+    address: String(body.address ?? '').trim(),
+    altAddress: String(body.altAddress ?? '').trim(),
+    provider: body.provider as WalletInput['provider'],
+    referralCode: String(body.referralCode ?? '').trim(),
+    email: String(body.email ?? '').trim(),
+    ens: String(body.ens ?? '').trim(),
+  }
 }
 
 export const walletHandlers = [
@@ -23,24 +31,22 @@ export const walletHandlers = [
     const user = getUser(request)
     if (!user) return unauthorized()
 
-    const body = (await request.json()) as { label: string; address: string; primary: boolean }
-    const label = String(body.label ?? '').trim()
-    const address = String(body.address ?? '').trim()
-    const errors = validate(label, address)
+    const body = (await request.json()) as Partial<WalletInput> & { primary: boolean }
+    const input = pick(body)
+    const errors = validateWallet(input)
     if (Object.keys(errors).length) return invalid(errors)
 
     const wallets = walletsOf(user.id)
     if (wallets.some((item) => item.primary === !!body.primary)) {
-      return conflict('label', `Já existe uma carteira ${body.primary ? 'principal' : 'secundária'}`)
+      return conflict('nickname', `Já existe uma carteira ${body.primary ? 'principal' : 'secundária'}`)
     }
-    if (wallets.some((item) => item.address.toLowerCase() === address.toLowerCase())) {
+    if (wallets.some((item) => item.address.toLowerCase() === input.address.toLowerCase())) {
       return conflict('address', 'Este endereço já está cadastrado')
     }
 
     const wallet: Wallet = {
+      ...input,
       id: `${user.id}-${body.primary ? 'w1' : 'w2'}`,
-      label,
-      address,
       primary: !!body.primary,
     }
     wallets.push(wallet)
@@ -57,22 +63,19 @@ export const walletHandlers = [
     const wallet = wallets.find((item) => item.id === params.id)
     if (!wallet) return HttpResponse.json({ code: 'not_found', message: 'Carteira não encontrada' }, { status: 404 })
 
-    const body = (await request.json()) as { label: string; address: string }
-    const label = String(body.label ?? '').trim()
-    const address = String(body.address ?? '').trim()
-    const errors = validate(label, address)
+    const input = pick((await request.json()) as Partial<WalletInput>)
+    const errors = validateWallet(input)
     if (Object.keys(errors).length) return invalid(errors)
 
-    if (wallets.some((item) => item.id !== wallet.id && item.address.toLowerCase() === address.toLowerCase())) {
+    if (wallets.some((item) => item.id !== wallet.id && item.address.toLowerCase() === input.address.toLowerCase())) {
       return conflict('address', 'Este endereço já está cadastrado')
     }
 
     // trocar o endereço invalida a conexão que estava aberta
-    if (wallet.address.toLowerCase() !== address.toLowerCase() && db.connections[user.id] === wallet.id) {
+    if (wallet.address.toLowerCase() !== input.address.toLowerCase() && db.connections[user.id] === wallet.id) {
       db.connections[user.id] = null
     }
-    wallet.label = label
-    wallet.address = address
+    Object.assign(wallet, input)
     save()
     return HttpResponse.json(view(user.id))
   }),

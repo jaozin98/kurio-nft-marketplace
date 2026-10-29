@@ -6,6 +6,15 @@ import { getUser, unauthorized } from './auth'
 const FAILING_ID = '13'
 
 export const favoriteHandlers = [
+  // os NFTs completos dos favoritos, para a página "Lista de interesse"
+  http.get('/api/favorites/nfts', async ({ request }) => {
+    await delay(250)
+    const user = getUser(request)
+    if (!user) return unauthorized()
+    const ids = db.favorites[user.id] ?? []
+    return HttpResponse.json(db.nfts.filter((nft) => ids.includes(nft.id)))
+  }),
+
   http.get('/api/favorites', async ({ request }) => {
     await delay(200)
     const user = getUser(request)

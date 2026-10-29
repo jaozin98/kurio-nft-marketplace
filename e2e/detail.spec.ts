@@ -88,3 +88,24 @@ test('adiciona ao carrinho', async ({ page }) => {
   await page.getByRole('button', { name: 'COMPRAR' }).click()
   await expect(page.getByText('Adicionado ao carrinho.')).toBeVisible()
 })
+
+test('o NFT favoritado aparece na lista de interesse e some ao desfavoritar', async ({ page }) => {
+  await page.goto('/login?redirect=/nft/5')
+  await login(page)
+
+  const saved = page.waitForResponse((res) => res.url().includes('/api/favorites/5') && res.ok())
+  await page.getByRole('button', { name: 'Favoritar', pressed: false }).click()
+  await saved
+
+  await page.goto('/favorites')
+  await expect(page.getByRole('heading', { name: 'Lista de interesse' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Rusty Ape #105/ })).toBeVisible()
+
+  await page.getByRole('link', { name: /Rusty Ape #105/ }).click()
+  const removed = page.waitForResponse((res) => res.url().includes('/api/favorites/5') && res.ok())
+  await page.getByRole('button', { name: 'Favoritar', pressed: true }).click()
+  await removed
+
+  await page.goto('/favorites')
+  await expect(page.getByText('Você ainda não favoritou nenhum NFT.')).toBeVisible()
+})

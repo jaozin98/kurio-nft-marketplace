@@ -1,6 +1,7 @@
 import { Link, useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { FiltersPanel } from '@/components/FiltersPanel'
+import { ArrowRight } from 'lucide-react'
 import { ChevronRightIcon, CloseIcon, SearchIcon } from '@/components/icons'
 import { NftCard, NftCardSkeleton } from '@/components/NftCard'
 import { useFeaturedNft, useFilterMeta, useNftList } from '@/features/nfts/queries'
@@ -226,11 +227,14 @@ export function Home() {
           )}
         </section>
       </div>
+
+      <Promos />
+      <Journal />
     </div>
   )
 }
 
-function Hero() {
+export function Hero() {
   const { data: featured, isPending } = useFeaturedNft()
 
   return (
@@ -301,6 +305,82 @@ function FeaturedBanner() {
         <p className="mt-3 text-base">{featured.name}</p>
         <p className="font-bold text-primary">{formatEth(featured.price)}</p>
       </Link>
+    </section>
+  )
+}
+
+const promos = [
+  {
+    image: '/nfts/monkey-a.jpg',
+    title: 'Lançamentos gênesis de edição limitada',
+    text: 'Colecione edições escassas diretamente dos criadores antes da revelação pública.',
+    search: { tab: 'new' as const },
+  },
+  {
+    image: '/nfts/chimp-a.jpg',
+    title: 'Arte digital selecionada e muito mais',
+    text: 'Explore novos artistas, coleções verificadas e obras digitais que definem a cultura da internet.',
+    search: { collection: ['Arte digital'] },
+  },
+]
+
+function Promos() {
+  return (
+    <section aria-label="Destaques" className="mt-20 grid gap-6 md:grid-cols-2">
+      {promos.map((promo) => (
+        <article key={promo.title} className="flex overflow-hidden rounded-lg bg-card">
+          <img src={promo.image} alt="" width={230} height={230} loading="lazy" className="w-2/5 object-cover" />
+          <div className="flex flex-1 flex-col items-end justify-between gap-4 p-5 text-right">
+            <div>
+              <h2 className="text-lg font-bold leading-tight">{promo.title}</h2>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{promo.text}</p>
+            </div>
+            <Link
+              to="/"
+              search={promo.search}
+              hash="catalogo"
+              className="flex items-center gap-2 rounded bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
+            >
+              Explorar
+              <ArrowRight aria-hidden className="size-4" />
+            </Link>
+          </div>
+        </article>
+      ))}
+    </section>
+  )
+}
+
+// os artigos levam a páginas editoriais, que estão fora do escopo: ficam sem link
+const articles = [
+  { image: '/nfts/chimp-b.jpg', date: '12 de setembro', read: 6, title: 'Como funciona a propriedade de NFTs' },
+  { image: '/nfts/monkey-b.jpg', date: '13 de setembro', read: 2, title: '10 artistas digitais para acompanhar' },
+  { image: '/nfts/gorilla-b.jpg', date: '15 de setembro', read: 3, title: 'Raridade, atributos e procedência' },
+  { image: '/nfts/orange-b.jpg', date: '15 de setembro', read: 2, title: 'Como proteger sua carteira' },
+]
+
+function Journal() {
+  return (
+    <section aria-labelledby="diario-titulo" className="mt-20">
+      <h2 id="diario-titulo" className="text-center text-3xl font-bold">
+        Diário da Cunhagem
+      </h2>
+      <p className="mt-3 text-center text-sm text-muted-foreground">
+        Histórias, guias e insights para colecionadores sobre o universo da propriedade digital.
+      </p>
+      <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {articles.map((article) => (
+          <li key={article.title} className="overflow-hidden rounded-lg bg-card">
+            <img src={article.image} alt="" width={300} height={220} loading="lazy" className="aspect-[4/3] w-full object-cover" />
+            <div className="space-y-2 p-4">
+              <p className="text-xs text-muted-foreground">
+                {article.date} <span aria-hidden>|</span> Leitura de {article.read} min
+              </p>
+              <h3 className="font-bold leading-snug">{article.title}</h3>
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   )
 }

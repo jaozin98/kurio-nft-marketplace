@@ -12,7 +12,12 @@ export function NftCard({ nft }: { nft: Nft }) {
       params={{ id: nft.id }}
       className="group block rounded-lg bg-card p-1 transition-colors hover:bg-secondary focus-visible:outline-2 focus-visible:outline-ring"
     >
-      <div className="aspect-square overflow-hidden rounded-lg bg-muted">
+      <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+        {nft.rarity !== 'comum' && (
+          <span className="absolute left-0 top-0 z-10 bg-primary px-3 py-1 text-sm font-medium uppercase text-primary-foreground">
+            {nft.rarity === 'raro' ? 'Raro' : 'Lendário'}
+          </span>
+        )}
         <img
           src={nft.image}
           alt={nft.name}

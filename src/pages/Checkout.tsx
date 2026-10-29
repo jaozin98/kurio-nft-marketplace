@@ -1,6 +1,6 @@
 import { Link, Navigate, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
-import { Field } from '@/components/Field'
+import { WalletFormFields } from '@/components/WalletFormFields'
 import { useSession } from '@/features/auth/queries'
 import { useCart } from '@/features/cart/queries'
 import {
@@ -17,37 +17,45 @@ import {
   useWallets,
 } from '@/features/wallets/queries'
 import { errorMessage } from '@/lib/api'
-import { formatEth } from '@/lib/eth'
+import { formatEth, fromUnits, toUnits } from '@/lib/eth'
+import { trapFocus } from '@/lib/focusTrap'
 import { editionOf } from '@/lib/nft'
 import { queryClient } from '@/lib/queryClient'
-import type { NetworkId } from '@/types'
+import { networkLabels, providerLabels, validateCollector } from '@/lib/validation'
+import type { Collector, NetworkId, User, Wallet } from '@/types'
 
-const networks: { id: NetworkId; label: string }[] = [
-  { id: 'ethereum', label: 'Ethereum' },
-  { id: 'polygon', label: 'Polygon' },
-  { id: 'arbitrum', label: 'Arbitrum' },
-]
-
-type Form = {
-  name: string
-  username: string
-  email: string
-  notes: string
-  walletId: string
-  network: NetworkId
-}
+type Saved = { edited: Record<string, string>; walletId: string; useOther: boolean }
 
 const formKey = (userId: string) => `checkout-form:${userId}`
 
 // guarda o formulário para retomar depois de uma sessão expirada
-function loadForm(userId: string): Form {
+function loadSaved(userId: string): Saved {
   try {
     const saved = sessionStorage.getItem(formKey(userId))
     if (saved) return JSON.parse(saved)
   } catch {
     // usa o valor padrão
   }
-  return { name: '', username: '', email: '', notes: '', walletId: '', network: 'ethereum' }
+  return { edited: {}, walletId: '', useOther: false }
+}
+
+const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`
+
+// valores iniciais: dados da conta e da carteira escolhida
+function baseValues(user: User, wallet: Wallet | undefined): Record<string, string> {
+  return {
+    displayName: wallet?.displayName ?? user.name,
+    username: user.username,
+    network: wallet?.network ?? '',
+    profileName: wallet?.profileName ?? user.username,
+    address: wallet?.address ?? '',
+    altAddress: wallet?.altAddress ?? '',
+    provider: wallet?.provider ?? '',
+    referralCode: wallet?.referralCode ?? '',
+    email: wallet?.email ?? user.email,
+    ens: wallet?.ens ?? user.ens,
+    notes: '',
+  }
 }
 
 export function Checkout() {
@@ -56,18 +64,11 @@ export function Checkout() {
   if (user === undefined) return <div className="shimmer mx-auto mt-8 h-96 max-w-2xl rounded-lg" />
   if (user === null) return <Navigate to="/login" search={{ redirect: '/checkout' }} />
 
-  return <CheckoutFlow userId={user.id} userName={user.name} userEmail={user.email} />
+  return <CheckoutFlow user={user} />
 }
 
-function CheckoutFlow({
-  userId,
-  userName,
-  userEmail,
-}: {
-  userId: string
-  userName: string
-  userEmail: string
-}) {
+function CheckoutFlow({ user }: { user: User }) {
+  const userId = user.id
   const navigate = useNavigate()
   const { data: cart, isPending: cartPending } = useCart(userId)
   const { data: walletData } = useWallets(userId)
@@ -75,31 +76,29 @@ function CheckoutFlow({
   const disconnect = useDisconnectWallet(userId)
   const createOrder = useCreateOrder(userId)
 
-  const [form, setForm] = useState<Form>(() => {
-    const saved = loadForm(userId)
-    return {
-      ...saved,
-      name: saved.name || userName,
-      email: saved.email || userEmail,
-      // sugestão de usuário a partir do e-mail; dá para editar
-      username: saved.username || userEmail.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_').slice(0, 20),
-      notes: saved.notes ?? '',
-    }
-  })
-  const [step, setStep] = useState<'form' | 'review'>('form')
-  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [saved] = useState(() => loadSaved(userId))
+  const [edited, setEdited] = useState(saved.edited)
+  const [walletChoice, setWalletChoice] = useState(saved.walletId)
+  const [useOther, setUseOther] = useState(saved.useOther)
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({})
+  const [reviewOpen, setReviewOpen] = useState(false)
   // total que o usuário viu e aceitou; se a cotação mudar, precisa confirmar de novo
   const [reviewed, setReviewed] = useState<string | null>(null)
   const sending = useRef(false)
 
   const wallets = walletData?.wallets ?? []
   const connectedId = walletData?.connectedId ?? null
-  const walletId = form.walletId || wallets.find((item) => item.primary)?.id || ''
+  const walletId = walletChoice || wallets.find((item) => item.primary)?.id || ''
+  const wallet = wallets.find((item) => item.id === walletId)
   const connected = !!walletId && connectedId === walletId
 
-  const quote = useQuote(userId, form.network, step === 'review')
+  const values = { ...baseValues(user, wallet), ...edited }
+  const network = (values.network || 'ethereum') as NetworkId
 
+  // a cotação do resumo acompanha a rede escolhida
+  const quote = useQuote(userId, network, true)
   const currentTotal = quote.data?.quote.total ?? null
+
   // se um item perdeu estoque (evento em tempo real), a compra fica bloqueada até ajustar o carrinho
   const unavailable = quote.data?.items.find(
     ({ nft, editionId, quantity }) => quantity > (editionOf(nft, editionId)?.stock ?? 0),
@@ -107,31 +106,42 @@ function CheckoutFlow({
   const stale = reviewed !== null && currentTotal !== null && currentTotal !== reviewed
 
   useEffect(() => {
-    sessionStorage.setItem(formKey(userId), JSON.stringify(form))
-  }, [form, userId])
+    sessionStorage.setItem(formKey(userId), JSON.stringify({ edited, walletId: walletChoice, useOther }))
+  }, [edited, walletChoice, useOther, userId])
 
-  function set<K extends keyof Form>(field: K, value: Form[K]) {
-    setForm((current) => ({ ...current, [field]: value }))
+  function change(name: string, value: string) {
+    setEdited((current) => ({ ...current, [name]: value }))
+  }
+
+  function chooseWallet(id: string) {
+    setWalletChoice(id)
+    // os dados da carteira nova substituem os da anterior; usuário e observação ficam
+    setEdited((current) => {
+      const keep: Record<string, string> = {}
+      if (current.username) keep.username = current.username
+      if (current.notes) keep.notes = current.notes
+      return keep
+    })
   }
 
   async function goToReview() {
-    const next: Record<string, string> = {}
-    if (!form.name.trim()) next.name = 'Informe o nome completo'
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(form.username)) next.username = 'Use de 3 a 20 letras, números ou _'
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) next.email = 'Digite um e-mail válido'
-    if (form.notes.length > 280) next.notes = 'Use até 280 caracteres'
+    const next: Record<string, string | undefined> = validateCollector(values as Partial<Collector>)
     if (!connected) next.wallet = 'Conecte a carteira escolhida para continuar'
+    if (useOther && !values.altAddress.trim()) {
+      next.altAddress = 'Informe o ENS ou a carteira secundária'
+    }
     setErrors(next)
-    if (Object.keys(next).length) return
+    if (Object.values(next).some(Boolean)) return
+
     createOrder.reset()
     // o total que o usuário vai ver é o da cotação buscada agora, não um valor antigo em cache
     try {
-      const fresh = await queryClient.fetchQuery(quoteOptions(userId, form.network))
+      const fresh = await queryClient.fetchQuery(quoteOptions(userId, network))
       setReviewed(fresh.quote.total)
     } catch {
       setReviewed(null)
     }
-    setStep('review')
+    setReviewOpen(true)
   }
 
   function confirm() {
@@ -142,13 +152,20 @@ function CheckoutFlow({
     createOrder.mutate(
       {
         walletId,
-        network: form.network,
+        network,
         expectedTotal: quote.data.quote.total,
         collector: {
-          name: form.name.trim(),
-          username: form.username,
-          email: form.email,
-          notes: form.notes.trim(),
+          displayName: values.displayName.trim(),
+          username: values.username,
+          network,
+          profileName: values.profileName,
+          address: values.address,
+          altAddress: useOther ? values.altAddress.trim() : '',
+          provider: values.provider as Collector['provider'],
+          referralCode: values.referralCode,
+          email: values.email,
+          ens: values.ens,
+          notes: values.notes.trim(),
         },
       },
       {
@@ -160,11 +177,11 @@ function CheckoutFlow({
           const info = orderError(error)
           if (info?.code === 'quote_changed' && info.cart) {
             // o total novo deixa a cotação "desatualizada" e pede nova confirmação
-            queryClient.setQueryData(quoteKey(userId, form.network), info.cart)
+            queryClient.setQueryData(quoteKey(userId, network), info.cart)
           }
           if (info?.code === 'validation' && info.errors) {
             setErrors(info.errors)
-            setStep('form')
+            setReviewOpen(false)
           }
         },
         onSettled: () => {
@@ -182,7 +199,7 @@ function CheckoutFlow({
     if (attempt) {
       return (
         <div className="mx-auto max-w-md py-24 text-center">
-          <h1 className="text-2xl font-semibold">Há um pedido em andamento</h1>
+          <h1 className="text-2xl font-bold">Há um pedido em andamento</h1>
           <p className="mt-3 text-muted-foreground">
             Não recebemos a resposta do último envio. Recupere o pedido: ele não será cobrado
             duas vezes.
@@ -199,7 +216,7 @@ function CheckoutFlow({
               })
             }
             disabled={createOrder.isPending}
-            className="mt-6 rounded bg-primary px-5 py-3 font-medium text-primary-foreground disabled:opacity-50"
+            className="mt-6 rounded bg-primary px-5 py-3 font-bold text-primary-foreground disabled:opacity-50"
           >
             {createOrder.isPending ? 'Recuperando…' : 'Recuperar pedido'}
           </button>
@@ -209,7 +226,7 @@ function CheckoutFlow({
 
     return (
       <div className="py-24 text-center">
-        <h1 className="text-2xl font-semibold">Não há itens para pagar</h1>
+        <h1 className="text-2xl font-bold">Não há itens para pagar</h1>
         <Link to="/" className="mt-4 inline-block text-primary underline">
           Explorar NFTs
         </Link>
@@ -221,105 +238,166 @@ function CheckoutFlow({
   const noResponse = createOrder.isError && !failure
 
   return (
-    <div className="mx-auto max-w-2xl py-8">
-      <h1 className="text-3xl font-bold">Pagamento</h1>
+    <div className="py-6">
+      <nav aria-label="Você está em" className="text-sm">
+        <Link to="/" className="hover:text-primary">Início</Link>
+        <span aria-hidden> / </span>
+        <Link to="/" hash="catalogo" className="hover:text-primary">Mercado</Link>
+        <span aria-hidden> / </span>
+        <span aria-current="page">Pagamento</span>
+      </nav>
 
-      {step === 'form' ? (
-        <div className="mt-8 space-y-8">
-          <fieldset className="space-y-4">
-            <legend className="text-lg font-semibold">Dados do colecionador</legend>
-            <Field
-              id="nome"
-              label="Nome completo"
-              value={form.name}
-              error={errors.name}
-              onChange={(value) => set('name', value)}
-              autoComplete="name"
+      <h1 className="sr-only">Pagamento</h1>
+
+      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_380px]">
+        <form
+          id="pagamento"
+          noValidate
+          aria-labelledby="perfil-colecionador"
+          onSubmit={(event) => {
+            event.preventDefault()
+            void goToReview()
+          }}
+          className="space-y-6"
+        >
+          <h2 id="perfil-colecionador" className="text-lg font-bold">
+            Perfil do colecionador
+          </h2>
+
+          <WalletFormFields
+            idPrefix="pgto"
+            variant="checkout"
+            values={values}
+            errors={errors}
+            onChange={change}
+            lockAddress
+          />
+
+          <label className="flex cursor-pointer items-center gap-2 text-sm">
+            <input type="checkbox" checked={useOther} onChange={(event) => setUseOther(event.target.checked)} />
+            Usar outra carteira?
+          </label>
+
+          <div>
+            <label htmlFor="observacao" className="mb-1.5 block text-sm">
+              Observação do colecionador (opcional)
+            </label>
+            <textarea
+              id="observacao"
+              rows={5}
+              maxLength={300}
+              value={values.notes}
+              onChange={(event) => change('notes', event.target.value)}
+              aria-invalid={!!errors.notes}
+              aria-describedby={errors.notes ? 'observacao-erro' : 'observacao-ajuda'}
+              className="w-full rounded border border-input bg-card px-3 py-2 text-sm"
             />
-            <Field
-              id="usuario"
-              label="Nome de usuário"
-              value={form.username}
-              error={errors.username}
-              onChange={(value) => set('username', value)}
-              autoComplete="username"
-            />
-            <Field
-              id="email"
-              label="E-mail"
-              type="email"
-              value={form.email}
-              error={errors.email}
-              onChange={(value) => set('email', value)}
-              autoComplete="email"
-            />
-            <div>
-              <label htmlFor="observacao" className="mb-1 block text-sm">
-                Observação do colecionador (opcional)
-              </label>
-              <textarea
-                id="observacao"
-                rows={3}
-                maxLength={300}
-                value={form.notes}
-                onChange={(event) => set('notes', event.target.value)}
-                aria-invalid={!!errors.notes}
-                aria-describedby={errors.notes ? 'observacao-erro' : 'observacao-ajuda'}
-                className="w-full rounded border border-input bg-card px-3 py-2 text-sm"
-              />
-              <p id="observacao-ajuda" className="mt-1 text-xs text-muted-foreground">
-                {form.notes.length}/280 caracteres
+            <p id="observacao-ajuda" className="mt-1 text-xs text-muted-foreground">
+              {values.notes.length}/280 caracteres
+            </p>
+            {errors.notes && (
+              <p id="observacao-erro" className="mt-1 text-sm text-destructive">
+                {errors.notes}
               </p>
-              {errors.notes && (
-                <p id="observacao-erro" className="mt-1 text-sm text-destructive">
-                  {errors.notes}
-                </p>
-              )}
+            )}
+          </div>
+        </form>
+
+        <aside aria-label="Resumo do pedido" className="h-fit space-y-6">
+          <section aria-labelledby="seus-nfts">
+            <h2 id="seus-nfts" className="text-lg font-bold">
+              Seus NFTs
+            </h2>
+            <div className="mt-2 flex justify-between border-b border-border pb-2 text-sm font-bold">
+              <span>NFTs</span>
+              <span>Subtotal</span>
             </div>
-          </fieldset>
+            <ul className="mt-2 space-y-2">
+              {quote.isPending
+                ? [0, 1].map((i) => <li key={i} aria-hidden className="shimmer h-14 rounded" />)
+                : quote.data?.items.map(({ nft, editionId, quantity }) => (
+                    <li key={`${nft.id}|${editionId}`} className="flex items-center gap-3 rounded bg-card p-2">
+                      <img src={nft.image} alt="" width={44} height={44} className="size-11 rounded object-cover" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold">{nft.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          ID do token: #{nft.id.padStart(4, '0')} · Edição {editionOf(nft, editionId)?.label}
+                        </p>
+                      </div>
+                      <span className="text-xs text-muted-foreground">(x {quantity})</span>
+                      <span className="text-sm font-bold text-primary">
+                        {formatEth(fromUnits(toUnits(nft.price) * BigInt(quantity)))}
+                      </span>
+                    </li>
+                  ))}
+            </ul>
+
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              Tem um código promocional?{' '}
+              <Link to="/cart" className="text-primary underline">
+                Aplique aqui
+              </Link>
+            </p>
+
+            {quote.data && (
+              <dl className="mt-3 space-y-2 text-sm">
+                <Row label="Subtotal" value={formatEth(quote.data.quote.subtotal)} />
+                <Row label="Desconto do lançamento" value={`(-) ${quote.data.quote.discount === '0' ? '0.00' : formatEth(quote.data.quote.discount)}`} />
+                <Row label="Taxa de rede" value={formatEth(quote.data.quote.networkFee)} hint="Taxa estimada" />
+                <div className="flex justify-between border-t border-border pt-3 text-base font-bold">
+                  <dt>Total</dt>
+                  <dd className="text-primary">{formatEth(quote.data.quote.total)}</dd>
+                </div>
+              </dl>
+            )}
+          </section>
 
           <fieldset>
-            <legend className="text-lg font-semibold">Carteira</legend>
+            <legend className="mb-3 text-lg font-bold">Carteira e rede</legend>
             {walletData && wallets.length === 0 && (
-              <p className="mt-3 text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Você ainda não cadastrou nenhuma carteira.{' '}
                 <Link to="/wallets" className="text-primary underline">
                   Cadastrar carteira
                 </Link>
               </p>
             )}
-            <ul className="mt-3 space-y-2">
-              {wallets.map((wallet) => (
-                <li key={wallet.id}>
-                  <label className="flex cursor-pointer items-center gap-3 rounded border border-border p-3">
+            <ul className="space-y-2">
+              {wallets.map((item) => (
+                <li key={item.id}>
+                  <label
+                    className={`flex cursor-pointer items-center gap-3 rounded border p-3 ${
+                      walletId === item.id ? 'border-primary' : 'border-border'
+                    }`}
+                  >
                     <input
                       type="radio"
                       name="carteira"
-                      checked={walletId === wallet.id}
-                      onChange={() => set('walletId', wallet.id)}
+                      checked={walletId === item.id}
+                      onChange={() => chooseWallet(item.id)}
                     />
                     <span className="flex-1">
-                      <span className="block text-sm font-medium">
-                        {wallet.label}{' '}
+                      <span className="block text-sm font-bold">
+                        {item.nickname}{' '}
                         <span className="font-normal text-muted-foreground">
-                          ({wallet.primary ? 'principal' : 'secundária'})
+                          ({item.primary ? 'principal' : 'secundária'})
                         </span>
                       </span>
                       <span className="block font-mono text-xs text-muted-foreground">
-                        {wallet.address.slice(0, 8)}…{wallet.address.slice(-6)}
+                        {shortAddress(item.address)} · {providerLabels[item.provider]} · Rede{' '}
+                        {networkLabels[item.network]}
                       </span>
                     </span>
-                    {connectedId === wallet.id && (
-                      <span className="text-xs text-primary">Conectada</span>
-                    )}
+                    {connectedId === item.id && <span className="text-xs text-primary">Conectada</span>}
                   </label>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-3 flex items-center gap-3">
+            <div className="mt-3 flex flex-wrap items-center gap-3">
               {connected ? (
                 <button
+                  type="button"
                   onClick={() => disconnect.mutate()}
                   disabled={disconnect.isPending}
                   className="rounded border border-border px-4 py-2 text-sm"
@@ -328,6 +406,7 @@ function CheckoutFlow({
                 </button>
               ) : (
                 <button
+                  type="button"
                   onClick={() => connect.mutate(walletId)}
                   disabled={!walletId || connect.isPending}
                   className="rounded border border-primary px-4 py-2 text-sm text-primary disabled:opacity-50"
@@ -342,156 +421,197 @@ function CheckoutFlow({
             </div>
           </fieldset>
 
-          <div>
-            <label htmlFor="rede" className="mb-1 block text-lg font-semibold">
-              Rede
-            </label>
-            <select
-              id="rede"
-              value={form.network}
-              onChange={(event) => set('network', event.target.value as NetworkId)}
-              className="w-full rounded border border-input bg-card px-3 py-2"
-            >
-              {networks.map((network) => (
-                <option key={network.id} value={network.id}>
-                  {network.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
           <button
-            onClick={goToReview}
-            className="w-full rounded bg-primary py-3 font-medium text-primary-foreground"
+            type="submit"
+            form="pagamento"
+            className="w-full rounded bg-primary py-3 font-bold text-primary-foreground"
           >
             Revisar pedido
           </button>
-        </div>
-      ) : (
-        <section aria-label="Revisão do pedido" className="mt-8 space-y-6">
-          <dl className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-card p-4 text-sm">
-            <dt className="text-muted-foreground">Colecionador</dt>
-            <dd>
-              {form.name} (@{form.username}) · {form.email}
-            </dd>
-            {form.notes.trim() && (
-              <>
-                <dt className="text-muted-foreground">Observação</dt>
-                <dd className="break-words">{form.notes.trim()}</dd>
-              </>
-            )}
-            <dt className="text-muted-foreground">Carteira</dt>
-            <dd>{wallets.find((item) => item.id === walletId)?.label}</dd>
-            <dt className="text-muted-foreground">Rede</dt>
-            <dd>{networks.find((item) => item.id === form.network)?.label}</dd>
-          </dl>
+        </aside>
+      </div>
 
-          {quote.isPending ? (
-            <div aria-busy="true" className="shimmer h-40 rounded-lg" />
-          ) : quote.isError ? (
-            <p role="alert" className="text-destructive">
-              Não foi possível calcular o pedido.{' '}
-              <button onClick={() => quote.refetch()} className="underline">
-                Tentar de novo
-              </button>
-            </p>
-          ) : (
-            <div className="rounded-lg border border-border bg-card p-4">
-              <ul className="space-y-2 text-sm">
-                {quote.data.items.map(({ nft, editionId, quantity }) => (
-                  <li key={`${nft.id}|${editionId}`} className="flex justify-between">
-                    <span>
-                      {quantity} × {nft.name} ({editionOf(nft, editionId)?.label})
-                    </span>
-                    <span className="font-mono">{formatEth(nft.price)}</span>
-                  </li>
-                ))}
-              </ul>
-              <dl className="mt-4 space-y-1 border-t border-border pt-3 text-sm">
-                <Row label="Subtotal" value={quote.data.quote.subtotal} />
-                <Row label="Desconto" value={quote.data.quote.discount} />
-                <Row label="Taxa de rede" value={quote.data.quote.networkFee} />
-                <div className="flex justify-between pt-2 text-base font-semibold">
-                  <dt>Total</dt>
-                  <dd className="font-mono">{formatEth(quote.data.quote.total)}</dd>
-                </div>
-              </dl>
-            </div>
-          )}
-
-          <div aria-live="polite" className="space-y-2 text-sm">
-            {unavailable && (
-              <p role="alert" className="rounded border border-destructive p-3 text-destructive">
-                {unavailable.nft.name} ({editionOf(unavailable.nft, unavailable.editionId)?.label})
-                não está mais disponível na quantidade escolhida.{' '}
-                <Link to="/cart" className="underline">
-                  Ajustar carrinho
-                </Link>
-              </p>
-            )}
-            {stale && currentTotal && (
-              <div role="alert" className="flex flex-wrap items-center gap-3 rounded border border-primary p-3">
-                <p className="flex-1">
-                  Os valores mudaram. O novo total é <strong>{formatEth(currentTotal)}</strong>.
-                  Confira e confirme novamente.
-                </p>
-                <button
-                  onClick={() => setReviewed(currentTotal)}
-                  className="rounded border border-primary px-3 py-1 text-primary"
-                >
-                  Aceitar novo valor
-                </button>
-              </div>
-            )}
-            {failure && failure.code !== 'quote_changed' && (
-              <p role="alert" className="text-destructive">
-                {failure.message}{' '}
-                {failure.code === 'unavailable' && (
-                  <Link to="/cart" className="underline">
-                    Ajustar carrinho
-                  </Link>
-                )}
-              </p>
-            )}
-            {noResponse && (
-              <p role="alert" className="text-destructive">
-                Não recebemos resposta do servidor. Seu pedido pode ter sido criado; ao tentar de
-                novo, ele não será duplicado.
-              </p>
-            )}
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={() => setStep('form')}
-              disabled={createOrder.isPending}
-              className="rounded border border-border px-5 py-3"
-            >
-              Voltar
-            </button>
-            <button
-              onClick={confirm}
-              disabled={createOrder.isPending || !quote.data || stale || !!unavailable}
-              className="flex-1 rounded bg-primary py-3 font-medium text-primary-foreground disabled:opacity-50"
-            >
-              {createOrder.isPending
-                ? 'Enviando pedido…'
-                : noResponse
-                  ? 'Tentar de novo'
-                  : 'Confirmar compra'}
-            </button>
-          </div>
-        </section>
-      )}
+      <ReviewDialog
+        open={reviewOpen}
+        onCancel={() => setReviewOpen(false)}
+        onConfirm={confirm}
+        values={values}
+        wallet={wallet}
+        network={network}
+        quote={quote.data}
+        pending={createOrder.isPending}
+        stale={stale}
+        unavailable={unavailable}
+        currentTotal={currentTotal}
+        onAccept={() => setReviewed(currentTotal)}
+        failure={failure}
+        noResponse={noResponse}
+      />
     </div>
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="flex justify-between">
+    <div className="flex justify-between gap-4">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-mono">{formatEth(value)}</dd>
+      <dd className="text-right">
+        {value}
+        {hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
+      </dd>
     </div>
+  )
+}
+
+type ReviewProps = {
+  open: boolean
+  onCancel: () => void
+  onConfirm: () => void
+  values: Record<string, string>
+  wallet?: Wallet
+  network: NetworkId
+  quote?: ReturnType<typeof useQuote>['data']
+  pending: boolean
+  stale: boolean
+  unavailable?: { nft: { name: string }; editionId: string }
+  currentTotal: string | null
+  onAccept: () => void
+  failure: ReturnType<typeof orderError>
+  noResponse: boolean
+}
+
+// revisão antes do envio, num modal (foco preso, Esc volta ao formulário)
+function ReviewDialog(props: ReviewProps) {
+  const { open, onCancel, onConfirm, values, wallet, network, quote, pending, stale, unavailable } = props
+  const ref = useRef<HTMLDialogElement>(null)
+
+  useEffect(() => {
+    const dialog = ref.current
+    if (!dialog) return
+    if (open && !dialog.open) dialog.showModal()
+    if (!open && dialog.open) dialog.close()
+  }, [open])
+
+  return (
+    <dialog
+      ref={ref}
+      aria-labelledby="revisao-titulo"
+      onClose={onCancel}
+      onKeyDown={trapFocus}
+      className="m-auto w-[min(560px,calc(100vw-2rem))] rounded-md border border-border bg-card p-0 text-foreground backdrop:bg-black/70 max-md:m-0 max-md:ml-auto max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
+    >
+      <div className="space-y-5 p-6">
+        <h2 id="revisao-titulo" className="text-xl font-bold">
+          Revise seu pedido
+        </h2>
+
+        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded bg-secondary p-4 text-sm">
+          <dt className="text-muted-foreground">Colecionador</dt>
+          <dd>
+            {values.displayName} (@{values.username}) · {values.email}
+          </dd>
+          <dt className="text-muted-foreground">Carteira</dt>
+          <dd>
+            {wallet?.nickname} · {providerLabels[(values.provider || 'metamask') as keyof typeof providerLabels]}
+          </dd>
+          <dt className="text-muted-foreground">Rede</dt>
+          <dd>{networkLabels[network]}</dd>
+          {values.notes.trim() && (
+            <>
+              <dt className="text-muted-foreground">Observação</dt>
+              <dd className="break-words">{values.notes.trim()}</dd>
+            </>
+          )}
+        </dl>
+
+        {!quote ? (
+          <div aria-busy="true" className="shimmer h-32 rounded" />
+        ) : (
+          <div>
+            <ul className="space-y-1 text-sm">
+              {quote.items.map(({ nft, editionId, quantity }) => (
+                <li key={`${nft.id}|${editionId}`} className="flex justify-between">
+                  <span>
+                    {quantity} × {nft.name} ({editionOf(nft, editionId)?.label})
+                  </span>
+                  <span>{formatEth(nft.price)}</span>
+                </li>
+              ))}
+            </ul>
+            <dl className="mt-3 space-y-1 border-t border-border pt-3 text-sm">
+              <Row label="Subtotal" value={formatEth(quote.quote.subtotal)} />
+              <Row label="Desconto" value={formatEth(quote.quote.discount)} />
+              <Row label="Taxa de rede" value={formatEth(quote.quote.networkFee)} />
+              <div className="flex justify-between pt-2 text-base font-bold">
+                <dt>Total</dt>
+                <dd className="text-primary">{formatEth(quote.quote.total)}</dd>
+              </div>
+            </dl>
+          </div>
+        )}
+
+        <div aria-live="polite" className="space-y-2 text-sm">
+          {unavailable && (
+            <p role="alert" className="rounded border border-destructive p-3 text-destructive">
+              {unavailable.nft.name} não está mais disponível na quantidade escolhida.{' '}
+              <Link to="/cart" className="underline">
+                Ajustar carrinho
+              </Link>
+            </p>
+          )}
+          {stale && props.currentTotal && (
+            <div role="alert" className="flex flex-wrap items-center gap-3 rounded border border-primary p-3">
+              <p className="flex-1">
+                Os valores mudaram. O novo total é <strong>{formatEth(props.currentTotal)}</strong>.
+                Confira e confirme novamente.
+              </p>
+              <button
+                type="button"
+                onClick={props.onAccept}
+                className="rounded border border-primary px-3 py-1 text-primary"
+              >
+                Aceitar novo valor
+              </button>
+            </div>
+          )}
+          {props.failure && props.failure.code !== 'quote_changed' && (
+            <p role="alert" className="text-destructive">
+              {props.failure.message}{' '}
+              {props.failure.code === 'unavailable' && (
+                <Link to="/cart" className="underline">
+                  Ajustar carrinho
+                </Link>
+              )}
+            </p>
+          )}
+          {props.noResponse && (
+            <p role="alert" className="text-destructive">
+              Não recebemos resposta do servidor. Seu pedido pode ter sido criado; ao tentar de
+              novo, ele não será duplicado.
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => ref.current?.close()}
+            disabled={pending}
+            className="rounded border border-border px-5 py-3"
+          >
+            Voltar
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={pending || !quote || stale || !!unavailable}
+            className="flex-1 rounded bg-primary py-3 font-bold text-primary-foreground disabled:opacity-50"
+          >
+            {pending ? 'Enviando pedido…' : props.noResponse ? 'Tentar de novo' : 'Confirmar compra'}
+          </button>
+        </div>
+      </div>
+      <div aria-hidden className="h-1.5 bg-primary" />
+    </dialog>
   )
 }

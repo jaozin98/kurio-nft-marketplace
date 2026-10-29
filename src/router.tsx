@@ -11,6 +11,8 @@ import { getToken } from '@/lib/session'
 import { Layout } from '@/components/Layout'
 import { Cart } from '@/pages/Cart'
 import { Checkout } from '@/pages/Checkout'
+import { Explorer } from '@/pages/Explorer'
+import { Favorites } from '@/pages/Favorites'
 import { Home } from '@/pages/Home'
 import { Login } from '@/pages/Login'
 import { Profile } from '@/pages/Profile'
@@ -109,6 +111,19 @@ const profileRoute = createRoute({
   component: Profile,
 })
 
+const explorerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/tx/$hash',
+  component: Explorer,
+})
+
+const favoritesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/favorites',
+  beforeLoad: () => requireLogin('/favorites'),
+  component: Favorites,
+})
+
 const walletsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/wallets',
@@ -123,6 +138,8 @@ const routeTree = rootRoute.addChildren([
   registerRoute,
   profileRoute,
   walletsRoute,
+  favoritesRoute,
+  explorerRoute,
   cartRoute,
   checkoutRoute,
   orderRoute,

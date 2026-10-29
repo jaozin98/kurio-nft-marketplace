@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { api } from '@/lib/api'
 import { queryClient } from '@/lib/queryClient'
+import type { Nft } from '@/types'
 
 // a chave inclui o usuário para nunca misturar favoritos entre contas
 const favoritesKey = (userId: string) => ['favorites', userId] as const
@@ -38,5 +39,16 @@ export function useToggleFavorite(userId: string) {
       if (context) queryClient.setQueryData(key, context.previous)
     },
     onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+  })
+}
+
+// a chave começa com a dos favoritos, então alternar um favorito também atualiza esta lista
+export function useFavoriteNfts(userId: string) {
+  return useQuery({
+    queryKey: [...favoritesKey(userId), 'nfts'] as const,
+    queryFn: async ({ signal }) => {
+      const { data } = await api.get<Nft[]>('/favorites/nfts', { signal })
+      return data
+    },
   })
 }

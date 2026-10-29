@@ -1,5 +1,6 @@
 import { delay, http, HttpResponse } from 'msw'
 import { fromUnits, toUnits } from '@/lib/eth'
+import { validateCollector } from '@/lib/validation'
 import { editionOf } from '@/lib/nft'
 import type { NetworkId, Order, OrderRequest } from '@/types'
 import { db, save, walletsOf, type OrderRecord } from '../db'
@@ -93,13 +94,7 @@ export const orderHandlers = [
       return HttpResponse.json(record.order)
     }
 
-    const errors: Record<string, string> = {}
-    if (!body.collector?.name?.trim()) errors.name = 'Informe o nome'
-    if (!/^[a-zA-Z0-9_]{3,20}$/.test(body.collector?.username ?? '')) {
-      errors.username = 'Use de 3 a 20 letras, números ou _'
-    }
-    if (!/^\S+@\S+\.\S+$/.test(body.collector?.email ?? '')) errors.email = 'E-mail inválido'
-    if ((body.collector?.notes ?? '').length > 280) errors.notes = 'Use até 280 caracteres'
+    const errors = validateCollector(body.collector ?? {})
     if (Object.keys(errors).length) {
       return fail(422, 'validation', 'Confira os dados informados', { errors })
     }
@@ -110,6 +105,11 @@ export const orderHandlers = [
       return fail(409, 'wallet_not_connected', 'Conecte a carteira antes de pagar')
     }
     if (!(body.network in networkFees)) return fail(422, 'validation', 'Rede inválida')
+    if (body.collector.address.toLowerCase() !== wallet.address.toLowerCase()) {
+      return fail(422, 'validation', 'Confira os dados informados', {
+        errors: { address: 'O endereço deve ser o da carteira escolhida' },
+      })
+    }
 
     // cenário: a sessão vence justo na hora de enviar o pedido
     if (consumeOnce('session-expired')) return unauthorized()
@@ -159,13 +159,13 @@ export const orderHandlers = [
       })),
       quote: cart.quote,
       network: body.network,
-      wallet: { label: wallet.label, address: wallet.address },
-      collector: {
-        name: body.collector.name.trim(),
-        username: body.collector.username,
-        email: body.collector.email,
-        notes: (body.collector.notes ?? '').trim(),
+      wallet: {
+        nickname: wallet.nickname,
+        address: wallet.address,
+        provider: wallet.provider,
+        network: body.network,
       },
+      collector: { ...body.collector, notes: (body.collector.notes ?? '').trim() },
       txHash: null,
       declineReason: null,
     }

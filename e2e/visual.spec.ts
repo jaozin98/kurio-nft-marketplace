@@ -40,7 +40,7 @@ test('pagamento', async ({ page }) => {
   await page.goto('/login?redirect=/checkout')
   await login(page)
   await page.getByRole('heading', { name: 'Pagamento' }).waitFor()
-  await page.getByText('Carteira principal').waitFor()
+  await page.getByRole('button', { name: 'Conectar carteira' }).waitFor()
   await settle(page)
   await expect(page).toHaveScreenshot('pagamento.png', options)
 })

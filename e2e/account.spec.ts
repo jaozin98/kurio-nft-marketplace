@@ -12,10 +12,10 @@ test.describe('cadastro e login', () => {
     await registerUser(page, 'Marina Teste', 'marina@exemplo.test')
 
     await expect(page).toHaveURL('/')
-    await expect(page.getByRole('link', { name: /Marina Teste|Perfil/ })).toBeVisible()
+    await expect(page.getByRole('link', { name: /marina_teste|Perfil/ })).toBeVisible()
 
     await page.reload()
-    await expect(page.getByRole('button', { name: 'Sair' })).toBeVisible()
+    await expect(page.getByRole('banner').getByRole('button', { name: 'Sair' })).toBeVisible()
   })
 
   test('e-mail já cadastrado vira erro no campo', async ({ page }) => {
@@ -29,16 +29,46 @@ test.describe('cadastro e login', () => {
 
   test('valida os campos antes de enviar', async ({ page }) => {
     await page.goto('/register')
-    await page.getByLabel('Nome completo').fill('A')
+    await page.getByLabel('Nome de usuário').fill('a!')
     await page.getByLabel('E-mail').fill('invalido')
     await page.getByLabel('Senha', { exact: true }).fill('curta')
     await page.getByLabel('Confirmar senha').fill('outra')
     await page.getByRole('button', { name: 'Criar conta' }).click()
 
-    await expect(page.getByText('Informe seu nome completo')).toBeVisible()
+    await expect(page.getByText('Use de 3 a 20 letras, números ou _')).toBeVisible()
     await expect(page.getByText('Digite um e-mail válido')).toBeVisible()
     await expect(page.getByText('A senha precisa ter ao menos 8 caracteres')).toBeVisible()
     await expect(page.getByText('As senhas não são iguais')).toBeVisible()
+  })
+
+  test('o olho mostra e oculta a senha', async ({ page }) => {
+    await page.goto('/login')
+    const senha = page.getByLabel('Senha', { exact: true })
+    await expect(senha).toHaveAttribute('type', 'password')
+    await page.getByRole('button', { name: 'Mostrar senha' }).click()
+    await expect(senha).toHaveAttribute('type', 'text')
+    await page.getByRole('button', { name: 'Ocultar senha' }).click()
+    await expect(senha).toHaveAttribute('type', 'password')
+  })
+
+  test('o modal fecha com o × e com Esc e volta ao catálogo', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await page.getByRole('button', { name: 'Fechar' }).click()
+    await expect(page).toHaveURL(/\/($|\?)/)
+
+    await page.goto('/register')
+    await expect(page.getByRole('dialog')).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page).toHaveURL(/\/($|\?)/)
+  })
+
+  test('alterna entre Entrar e Criar conta pelas abas', async ({ page }) => {
+    await page.goto('/login')
+    await expect(page.getByRole('heading', { level: 1, name: 'Entrar' })).toBeVisible()
+    await page.getByRole('link', { name: 'Criar conta' }).first().click()
+    await expect(page).toHaveURL(/\/register/)
+    await expect(page.getByRole('heading', { level: 1, name: 'Criar conta' })).toBeVisible()
   })
 
   test('itens do visitante vão para a conta nova', async ({ page }) => {
@@ -54,7 +84,7 @@ test.describe('cadastro e login', () => {
     await page.goto('/login')
     await loginAs(page, 'ana@greenmint.test', 'senha-errada')
     await expect(page.getByRole('alert')).toContainText('E-mail ou senha incorretos')
-    await expect(page.getByRole('button', { name: 'Sair' })).toHaveCount(0)
+    await expect(page.getByRole('banner').getByRole('button', { name: 'Sair' })).toHaveCount(0)
   })
 })
 
@@ -65,7 +95,7 @@ test.describe('sessão', () => {
     await page.getByRole('button', { name: 'Favoritar', pressed: false }).click()
     await expect(page.getByRole('button', { name: 'Favoritar', pressed: true })).toBeVisible()
 
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('banner').getByRole('button', { name: 'Sair' }).click()
     await expect(page.getByRole('button', { name: 'Favoritar', pressed: false })).toBeVisible()
 
     await page.goto('/login?redirect=/nft/5')
@@ -88,7 +118,7 @@ test.describe('sessão', () => {
     await login(page)
     await expect(page).toHaveURL('/checkout')
 
-    await page.getByLabel('Nome completo').fill('Maria Retomada')
+    await page.getByLabel('Nome de exibição').fill('Maria Retomada')
     await page.getByRole('button', { name: 'Conectar carteira' }).click()
     await expect(page.getByText('Conectada')).toBeVisible()
 
@@ -101,7 +131,7 @@ test.describe('sessão', () => {
     await loginAs(page, 'ana@greenmint.test', 'senha123')
 
     await expect(page).toHaveURL('/checkout')
-    await expect(page.getByLabel('Nome completo')).toHaveValue('Maria Retomada')
+    await expect(page.getByLabel('Nome de exibição')).toHaveValue('Maria Retomada')
   })
 })
 
@@ -113,28 +143,28 @@ test.describe('perfil', () => {
   })
 
   test('edita os dados e eles persistem após refresh', async ({ page }) => {
-    await page.getByLabel('Nome completo').fill('Ana Maria Souza')
-    await page.getByRole('button', { name: 'Salvar dados' }).click()
+    await page.getByLabel('Nome de exibição').fill('Ana Maria Souza')
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(page.getByText('Dados salvos.')).toBeVisible()
 
     await page.reload()
-    await expect(page.getByLabel('Nome completo')).toHaveValue('Ana Maria Souza')
+    await expect(page.getByLabel('Nome de exibição')).toHaveValue('Ana Maria Souza')
   })
 
   test('e-mail em uso mostra o erro da API e desfaz o nome otimista', async ({ page }) => {
-    await page.getByLabel('Nome completo').fill('Nome Que Não Vale')
+    await page.getByLabel('Nome de exibição').fill('Nome Que Não Vale')
     await page.getByLabel('E-mail').fill('bruno@greenmint.test')
-    await page.getByRole('button', { name: 'Salvar dados' }).click()
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
 
     await expect(page.getByText('Este e-mail já está em uso')).toBeVisible()
     await expect(page.getByRole('banner').getByText('Nome Que Não Vale')).toHaveCount(0)
   })
 
   test('valida e-mail e nome antes de enviar', async ({ page }) => {
-    await page.getByLabel('Nome completo').fill('')
+    await page.getByLabel('Nome de exibição').fill('')
     await page.getByLabel('E-mail').fill('invalido')
-    await page.getByRole('button', { name: 'Salvar dados' }).click()
-    await expect(page.getByText('Informe seu nome completo')).toBeVisible()
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
+    await expect(page.getByText('Informe o nome de exibição')).toBeVisible()
     await expect(page.getByText('Digite um e-mail válido')).toBeVisible()
   })
 
@@ -155,17 +185,17 @@ test.describe('perfil', () => {
   })
 
   test('altera a senha e entra com a nova', async ({ page }) => {
-    await page.getByLabel('Senha atual').fill('errada123')
+    await page.getByLabel('Senha atual', { exact: true }).fill('errada123')
     await page.getByLabel('Nova senha', { exact: true }).fill('novasenha1')
-    await page.getByLabel('Confirmar nova senha').fill('novasenha1')
-    await page.getByRole('button', { name: 'Alterar senha' }).click()
+    await page.getByLabel('Confirmar nova senha', { exact: true }).fill('novasenha1')
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(page.getByText('Senha atual incorreta')).toBeVisible()
 
-    await page.getByLabel('Senha atual').fill('senha123')
-    await page.getByRole('button', { name: 'Alterar senha' }).click()
+    await page.getByLabel('Senha atual', { exact: true }).fill('senha123')
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(page.getByText('Senha alterada.')).toBeVisible()
 
-    await page.getByRole('button', { name: 'Sair' }).click()
+    await page.getByRole('banner').getByRole('button', { name: 'Sair' }).click()
     await page.goto('/login')
     await loginAs(page, 'ana@greenmint.test', 'senha123')
     await expect(page.getByRole('alert')).toContainText('E-mail ou senha incorretos')
@@ -175,28 +205,38 @@ test.describe('perfil', () => {
   })
 
   test('confirmação diferente da nova senha é recusada no cliente', async ({ page }) => {
-    await page.getByLabel('Senha atual').fill('senha123')
+    await page.getByLabel('Senha atual', { exact: true }).fill('senha123')
     await page.getByLabel('Nova senha', { exact: true }).fill('novasenha1')
-    await page.getByLabel('Confirmar nova senha').fill('diferente1')
-    await page.getByRole('button', { name: 'Alterar senha' }).click()
+    await page.getByLabel('Confirmar nova senha', { exact: true }).fill('diferente1')
+    await page.getByRole('button', { name: 'Salvar', exact: true }).click()
     await expect(page.getByText('As senhas não são iguais')).toBeVisible()
   })
 })
 
 test.describe('carteiras', () => {
+  const fill = async (form: import('@playwright/test').Locator, data: Record<string, string>) => {
+    for (const [label, value] of Object.entries(data)) {
+      const field = form.getByLabel(label, { exact: true })
+      if ((await field.evaluate((el) => el.tagName)) === 'SELECT') await field.selectOption(value)
+      else await field.fill(value)
+    }
+  }
+
   test('edita a carteira principal e persiste', async ({ page }) => {
     await page.goto('/login?redirect=/wallets')
     await login(page)
 
     const principal = page.getByRole('form', { name: 'Carteira principal' })
-    await expect(principal.getByLabel('Nome da carteira')).toHaveValue('Carteira principal')
+    await expect(principal.getByLabel('Apelido da carteira')).toHaveValue('Principal')
 
-    await principal.getByLabel('Nome da carteira').fill('Minha principal')
+    await principal.getByLabel('Apelido da carteira').fill('Minha principal')
     await principal.getByRole('button', { name: 'Salvar carteira' }).click()
     await expect(principal.getByText('Carteira salva.')).toBeVisible()
 
     await page.reload()
-    await expect(page.getByRole('form', { name: 'Carteira principal' }).getByLabel('Nome da carteira')).toHaveValue('Minha principal')
+    await expect(
+      page.getByRole('form', { name: 'Carteira principal' }).getByLabel('Apelido da carteira'),
+    ).toHaveValue('Minha principal')
   })
 
   test('endereço inválido mostra erro', async ({ page }) => {
@@ -204,9 +244,21 @@ test.describe('carteiras', () => {
     await login(page)
 
     const principal = page.getByRole('form', { name: 'Carteira principal' })
-    await principal.getByLabel('Endereço').fill('0x123')
+    await principal.getByLabel('Endereço da carteira').fill('0x123')
     await principal.getByRole('button', { name: 'Salvar carteira' }).click()
     await expect(principal.getByText(/Endereço inválido/)).toBeVisible()
+  })
+
+  test('campos obrigatórios em branco mostram um erro cada', async ({ page }) => {
+    await page.goto('/login?redirect=/wallets')
+    await login(page)
+
+    const principal = page.getByRole('form', { name: 'Carteira principal' })
+    await principal.getByLabel('Código de indicação').fill('')
+    await principal.getByLabel('Nome ENS').fill('')
+    await principal.getByRole('button', { name: 'Salvar carteira' }).click()
+    await expect(principal.getByText('Use de 4 a 12 letras ou números')).toBeVisible()
+    await expect(principal.getByText('Use de 3 a 30 letras, números ou -')).toBeVisible()
   })
 
   test('conta nova cadastra as duas carteiras e recusa endereço repetido', async ({ page }) => {
@@ -214,23 +266,72 @@ test.describe('carteiras', () => {
     await registerUser(page, 'Marina Teste', 'marina@exemplo.test')
     await expect(page).toHaveURL('/wallets')
 
-    const principal = page.getByRole('form', { name: 'Carteira principal' })
-    const secundaria = page.getByRole('form', { name: 'Carteira secundária' })
     const address = '0x1111111111111111111111111111111111111111'
+    const base = {
+      'Rede': 'ethereum',
+      'Endereço da carteira': address,
+      'Tipo de carteira': 'metamask',
+      'Código de indicação': 'KURIO2026',
+    }
 
-    await principal.getByLabel('Nome da carteira').fill('Principal')
-    await principal.getByLabel('Endereço').fill(address)
-    await principal.getByRole('button', { name: 'Cadastrar carteira' }).click()
+    const principal = page.getByRole('form', { name: 'Carteira principal' })
+    await fill(principal, { 'Apelido da carteira': 'Principal', ...base })
+    await principal.getByRole('button', { name: 'Salvar carteira' }).click()
     await expect(principal.getByText('Carteira cadastrada.')).toBeVisible()
 
-    await secundaria.getByLabel('Nome da carteira').fill('Secundária')
-    await secundaria.getByLabel('Endereço').fill(address)
-    await secundaria.getByRole('button', { name: 'Cadastrar carteira' }).click()
+    // a secundária só abre depois de "Adicionar"
+    await page.getByRole('button', { name: 'Adicionar' }).click()
+    const secundaria = page.getByRole('form', { name: 'Carteira secundária' })
+    await fill(secundaria, { 'Apelido da carteira': 'Reserva', ...base })
+    await secundaria.getByRole('button', { name: 'Salvar carteira' }).click()
     await expect(secundaria.getByText('Este endereço já está cadastrado')).toBeVisible()
+  })
+
+  test('"Igual à carteira principal" copia os dados e deixa o endereço em branco', async ({ page }) => {
+    await page.goto('/login?redirect=/wallets')
+    await login(page)
+
+    // a conta de teste já tem a secundária; remove o caso usando uma conta nova com só a principal
+    await page.getByRole('banner').getByRole('button', { name: 'Sair' }).click()
+    await page.goto('/register?redirect=/wallets')
+    await registerUser(page, 'Carlos Teste', 'carlos@exemplo.test')
+    await expect(page).toHaveURL('/wallets')
+
+    const principal = page.getByRole('form', { name: 'Carteira principal' })
+    await fill(principal, {
+      'Apelido da carteira': 'Principal',
+      Rede: 'polygon',
+      'Endereço da carteira': '0x2222222222222222222222222222222222222222',
+      'Tipo de carteira': 'coinbase',
+      'Código de indicação': 'KURIO2026',
+    })
+    await principal.getByRole('button', { name: 'Salvar carteira' }).click()
+    await expect(principal.getByText('Carteira cadastrada.')).toBeVisible()
+
+    await page.getByLabel('Igual à carteira principal').check()
+    await page.getByRole('button', { name: 'Adicionar' }).click()
+    const secundaria = page.getByRole('form', { name: 'Carteira secundária' })
+    await expect(secundaria.getByLabel('Rede', { exact: true })).toHaveValue('polygon')
+    await expect(secundaria.getByLabel('Tipo de carteira')).toHaveValue('coinbase')
+    await expect(secundaria.getByLabel('Endereço da carteira')).toHaveValue('')
   })
 
   test('tela de carteiras exige login', async ({ page }) => {
     await page.goto('/wallets')
     await expect(page).toHaveURL(/\/login\?redirect=%2Fwallets/)
+  })
+
+  test('o menu lateral leva entre as telas da conta e esmaece o que está fora do escopo', async ({ page }) => {
+    await page.goto('/login?redirect=/profile')
+    await login(page)
+    const menu = page.getByRole('navigation', { name: 'Meu perfil' }).first()
+    await expect(menu.getByRole('link', { name: 'Dados do perfil' })).toHaveAttribute('aria-current', 'page')
+    await expect(menu.getByText('Atividade')).toHaveAttribute('aria-disabled', 'true')
+
+    await menu.getByRole('link', { name: 'Carteiras' }).click()
+    await expect(page).toHaveURL('/wallets')
+    await menu.getByRole('link', { name: 'Lista de interesse' }).click()
+    await expect(page).toHaveURL('/favorites')
+    await expect(page.getByText('Você ainda não favoritou nenhum NFT.')).toBeVisible()
   })
 })

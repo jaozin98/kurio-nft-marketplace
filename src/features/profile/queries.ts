@@ -9,7 +9,13 @@ const saveSession = (user: User) => queryClient.setQueryData(sessionKey, user)
 // o nome aparece no cabeçalho na hora; se a API recusar, volta ao que estava
 export function useUpdateProfile() {
   return useMutation({
-    mutationFn: async (data: { name: string; email: string }) => {
+    mutationFn: async (data: {
+      name: string
+      username: string
+      email: string
+      ens: string
+      walletNickname: string
+    }) => {
       const { data: user } = await api.patch<User>('/profile', data)
       return user
     },

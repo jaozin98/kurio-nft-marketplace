@@ -18,7 +18,7 @@ async function connectAndReview(page: Page) {
 }
 
 const orderCount = (page: Page) =>
-  page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mock-db-v5') ?? '{}').orders ?? {}).length)
+  page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mock-db-v6') ?? '{}').orders ?? {}).length)
 
 test('checkout exige login e volta depois', async ({ page }) => {
   await page.goto('/checkout')

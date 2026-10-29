@@ -1,7 +1,7 @@
 import type { Order, User, Wallet } from '@/types'
 import { createNfts, users } from './data'
 
-const KEY = 'mock-db-v5'
+const KEY = 'mock-db-v6'
 
 export type Account = User & { passwordHash: string }
 

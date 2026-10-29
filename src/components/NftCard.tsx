@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import { CartIcon, HeartIcon } from '@/components/icons'
 import { formatEth } from '@/lib/eth'
 import { totalStock } from '@/lib/nft'
 import type { Nft } from '@/types'
@@ -18,6 +19,18 @@ export function NftCard({ nft }: { nft: Nft }) {
             {nft.rarity === 'raro' ? 'Raro' : 'Lendário'}
           </span>
         )}
+        {/* só visuais: o card inteiro leva ao detalhe, onde ficam favoritar e comprar */}
+        <span
+          aria-hidden
+          className="absolute right-2 top-2 z-10 hidden gap-2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 md:flex"
+        >
+          <span className="flex size-8 items-center justify-center rounded-full bg-background/80 text-primary">
+            <HeartIcon className="size-4" />
+          </span>
+          <span className="flex size-8 items-center justify-center rounded-full bg-background/80 text-primary">
+            <CartIcon className="size-4" />
+          </span>
+        </span>
         <img
           src={nft.image}
           alt={nft.name}

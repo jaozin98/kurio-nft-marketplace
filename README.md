@@ -57,7 +57,7 @@ Cupons: `GREEN10` (10%), `GREEN25` (25%) e `OLD20` (expirado). Qualquer outro c�
 
 ## Cenários e reset
 
-O estado do mock fica no `localStorage` (chave `mock-db-v5`), então sobrevive ao refresh.
+O estado do mock fica no `localStorage` (chave `mock-db-v6`), então sobrevive ao refresh.
 
 - Escolher um cenário: abra qualquer página com `?scenario=nome`, por exemplo `/?scenario=slow`. A escolha fica salva no navegador. `?scenario=default` volta ao normal.
 - Reset total: `/?reset=1` apaga carrinhos, favoritos, pedidos, carteiras, contas criadas e estoque vendido. Também funciona no console: `__mock.resetDb()`.

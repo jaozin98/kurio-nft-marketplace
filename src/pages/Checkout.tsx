@@ -270,6 +270,24 @@ function CheckoutFlow({ user }: { user: User }) {
             Perfil do colecionador
           </h2>
 
+          {/* no mobile o Figma mostra os provedores como lista antes do formulário */}
+          <div role="radiogroup" aria-label="Provedor da carteira" className="grid gap-2 md:hidden">
+            {Object.entries(providerLabels).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                role="radio"
+                aria-checked={values.provider === key}
+                onClick={() => change('provider', key)}
+                className={`rounded-2xl border px-4 py-3 text-left text-sm ${
+                  values.provider === key ? 'border-primary font-bold text-primary' : 'border-border'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           <WalletFormFields
             idPrefix="pgto"
             variant="checkout"

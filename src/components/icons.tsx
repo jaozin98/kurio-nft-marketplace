@@ -49,6 +49,12 @@ export const HeartIcon = ({ filled, ...props }: SVGProps<SVGSVGElement> & { fill
   </svg>
 )
 
+export const StarIcon = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...base} {...props} fill="currentColor" strokeWidth={1.5}>
+    <path d="m12 3.5 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.8l-5.2 2.8 1-5.8-4.3-4.1 5.9-.9L12 3.5Z" />
+  </svg>
+)
+
 export const PlusIcon = (props: SVGProps<SVGSVGElement>) => (
   <svg {...base} strokeWidth={2.5} {...props}>
     <path d="M12 5v14M5 12h14" />

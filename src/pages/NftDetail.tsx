@@ -2,7 +2,7 @@ import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { useEffect, useState } from 'react'
 import { BackButton } from '@/components/BackButton'
-import { HeartIcon } from '@/components/icons'
+import { HeartIcon, StarIcon } from '@/components/icons'
 import { RelatedNfts } from '@/components/RelatedNfts'
 import { Stepper } from '@/components/Stepper'
 import { useSession } from '@/features/auth/queries'
@@ -11,7 +11,7 @@ import { useFavorites, useToggleFavorite } from '@/features/favorites/queries'
 import { useNft } from '@/features/nfts/queries'
 import { errorMessage } from '@/lib/api'
 import { formatEth } from '@/lib/eth'
-import { editionOf, firstAvailable, totalStock } from '@/lib/nft'
+import { editionOf, firstAvailable, ratingOf, totalStock } from '@/lib/nft'
 import type { Nft, Rarity } from '@/types'
 
 const rarityLabel: Record<Rarity, string> = {
@@ -122,7 +122,21 @@ function NftView({ nft }: { nft: Nft }) {
             ))}
           </ul>
 
-          <div className="flex-1 rounded-lg bg-card p-4 max-md:bg-transparent max-md:p-0">
+          <div className="relative flex-1 rounded-lg bg-card p-4 max-md:bg-transparent max-md:p-0">
+            {/* no mobile o Figma põe o coração e a nota sobre a foto; o botão "Favoritar" de baixo some */}
+            <button
+              onClick={onFavorite}
+              aria-pressed={isFavorite}
+              aria-label="Favoritar"
+              className="absolute right-3 top-3 z-10 flex size-10 items-center justify-center rounded-full bg-background/70 text-primary backdrop-blur md:hidden"
+            >
+              <HeartIcon filled={isFavorite} className="size-5" />
+            </button>
+            <p className="absolute bottom-3 left-3 z-10 flex items-center gap-1 rounded-full bg-background/70 px-3 py-1 text-sm backdrop-blur md:hidden">
+              <StarIcon aria-hidden className="size-4 text-primary" />
+              <span className="sr-only">Nota </span>
+              {ratingOf(nft)}
+            </p>
             <img
               src={nft.gallery[selected]}
               alt={`${nft.name}, imagem ${selected + 1} de ${nft.gallery.length}`}
@@ -218,7 +232,7 @@ function NftView({ nft }: { nft: Nft }) {
               <button
                 onClick={onFavorite}
                 aria-pressed={isFavorite}
-                className="flex flex-1 items-center justify-center gap-2 rounded border border-primary px-4 py-2 text-base text-primary sm:flex-none"
+                className="flex flex-1 items-center justify-center gap-2 rounded border border-primary px-4 py-2 text-base text-primary max-md:hidden sm:flex-none"
               >
                 <HeartIcon filled={isFavorite} className="size-4" />
                 Favoritar

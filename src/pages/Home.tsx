@@ -281,13 +281,19 @@ export function Hero() {
             <div aria-hidden className="shimmer size-full rounded-2xl" />
           )}
           <img
-            src="/nfts/gorilla-a.jpg"
+            src="/nfts/gorilla-a-sm.jpg"
             alt=""
             width={56}
             height={56}
             className="absolute -bottom-3 -left-3 size-12 rounded-xl border-4 border-[#5a3719] object-cover"
           />
         </div>
+      </div>
+      {/* indicador do Figma: o destaque é um só, então os pontos são só visuais */}
+      <div aria-hidden className="mt-4 flex justify-center gap-1.5">
+        <span className="h-1.5 w-5 rounded-full bg-primary" />
+        <span className="size-1.5 rounded-full bg-primary/40" />
+        <span className="size-1.5 rounded-full bg-primary/40" />
       </div>
     </section>
 

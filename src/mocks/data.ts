@@ -32,7 +32,7 @@ const rarities: Rarity[] = ['comum', 'raro', 'lendario']
 // a = enquadramento do card, b = recorte apertado, c = card espelhado.
 const characters = ['monkey', 'gorilla', 'chimp', 'orange'] as const
 
-function artwork(n: number, variant: 'a' | 'b' | 'c') {
+function artwork(n: number, variant: 'a' | 'b' | 'c' | 'a-sm') {
   return `/nfts/${characters[(n - 1) % characters.length]}-${variant}.jpg`
 }
 
@@ -65,7 +65,8 @@ export function createNfts(): Nft[] {
       rarity: rarities[(n * 7) % 3],
       price: (0.4 + ((n * 37) % 90) / 100).toFixed(2),
       editions: createEditions(n),
-      image: artwork(n, 'a'),
+      // miniatura de 400 px para cards e destaque; o detalhe usa a galeria em tamanho cheio
+      image: artwork(n, 'a-sm'),
       gallery: [artwork(n, 'a'), artwork(n, 'b'), artwork(n, 'c')],
       description: `Obra digital da coleção ${collections[i % collections.length]}, com ${editionList.length} edições numeradas e certificado de autenticidade.`,
       // a cada três NFTs, um aparece com o preço anterior riscado, como no Figma

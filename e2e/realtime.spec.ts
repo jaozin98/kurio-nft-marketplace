@@ -13,7 +13,7 @@ async function mock<T>(page: Page, fn: string, ...args: unknown[]) {
 }
 
 const orderCount = (page: Page) =>
-  page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mock-db-v5') ?? '{}').orders ?? {}).length)
+  page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mock-db-v6') ?? '{}').orders ?? {}).length)
 
 async function pendingOrder(page: Page) {
   await addToCart(page, '4')

@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { Link } from '@tanstack/react-router'
 import { CartIcon, HeartIcon } from '@/components/icons'
 import { formatEth } from '@/lib/eth'

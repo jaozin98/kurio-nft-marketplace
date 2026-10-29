@@ -1,7 +1,9 @@
 import { Link, useRouter } from '@tanstack/react-router'
 import { Eye, EyeOff } from 'lucide-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { trapFocus } from '@/lib/focusTrap'
+import { useRef, useState, type ReactNode } from 'react'
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { CloseIcon } from './icons'
 
 type AuthModalProps = {
@@ -13,36 +15,29 @@ type AuthModalProps = {
 
 // Login e cadastro são um modal sobre a Home no desktop e uma tela cheia no mobile (Figma)
 export function AuthModal({ mode, redirect, description, children }: AuthModalProps) {
-  const dialog = useRef<HTMLDialogElement>(null)
+  const popup = useRef<HTMLDivElement>(null)
   const router = useRouter()
-
-  useEffect(() => {
-    const element = dialog.current
-    if (element && !element.open) element.showModal()
-    // o foco começa no primeiro campo, não no botão de fechar
-    element?.querySelector('input')?.focus()
-  }, [])
 
   const tab = 'text-xl font-medium'
   const other = mode === 'login' ? '/register' : '/login'
 
   return (
-    <dialog
-      ref={dialog}
-      aria-labelledby="auth-titulo"
-      // fechar (× ou Esc) volta ao catálogo; o destino de volta só vale depois de entrar
-      onClose={() => router.history.push('/')}
-      onKeyDown={trapFocus}
-      className="m-auto w-[min(500px,calc(100vw-2rem))] overflow-hidden rounded-md border border-border bg-card p-0 text-foreground backdrop:bg-black/70 max-md:m-0 max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none max-md:border-0"
-    >
+    // fechar (× ou Esc) volta ao catálogo; o destino de volta só vale depois de entrar
+    <Dialog open onOpenChange={(open) => !open && router.history.push('/')}>
+      <DialogContent
+        ref={popup}
+        showCloseButton={false}
+        // o foco começa no primeiro campo, não no botão de fechar
+        initialFocus={() => popup.current?.querySelector('input') ?? true}
+        className="w-[min(500px,calc(100vw-2rem))] max-w-none gap-0 overflow-hidden rounded-md border border-border bg-card p-0 text-foreground ring-0 sm:max-w-none max-md:left-0 max-md:top-0 max-md:h-dvh max-md:w-full max-md:translate-x-0 max-md:translate-y-0 max-md:rounded-none max-md:border-0"
+      >
       <div className="relative flex min-h-full flex-col px-8 pb-10 pt-8 max-md:px-6 max-md:pt-6">
-        <button
-          onClick={() => dialog.current?.close()}
+        <DialogClose
           aria-label="Fechar"
           className="absolute right-4 top-4 grid size-8 place-items-center rounded text-primary"
         >
           <CloseIcon className="size-4" />
-        </button>
+        </DialogClose>
 
         <p
           aria-hidden
@@ -54,9 +49,9 @@ export function AuthModal({ mode, redirect, description, children }: AuthModalPr
         <div className="flex items-center justify-center gap-3">
           {mode === 'login' ? (
             <>
-              <h1 id="auth-titulo" className={`${tab} text-primary`}>
+              <DialogTitle render={<h1 />} className={`${tab} text-primary`}>
                 Entrar
-              </h1>
+              </DialogTitle>
               <span aria-hidden className="h-5 w-px bg-primary" />
               <Link to={other} search={{ redirect }} className={tab}>
                 Criar conta
@@ -68,9 +63,9 @@ export function AuthModal({ mode, redirect, description, children }: AuthModalPr
                 Entrar
               </Link>
               <span aria-hidden className="h-5 w-px bg-primary" />
-              <h1 id="auth-titulo" className={`${tab} text-primary`}>
+              <DialogTitle render={<h1 />} className={`${tab} text-primary`}>
                 Criar conta
-              </h1>
+              </DialogTitle>
             </>
           )}
         </div>
@@ -103,7 +98,8 @@ export function AuthModal({ mode, redirect, description, children }: AuthModalPr
         </div>
       </div>
       <div aria-hidden className="h-1.5 bg-primary" />
-    </dialog>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -124,16 +120,16 @@ export function AuthField({
 
   return (
     <div>
-      <label htmlFor={id} className="sr-only">
+      <Label htmlFor={id} className="sr-only">
         {label}
-      </label>
+      </Label>
       <div className="relative">
-        <input
+        <Input
           id={id}
           type={password ? (shown ? 'text' : 'password') : (props.type ?? 'text')}
           aria-invalid={!!error}
           aria-describedby={error ? `${id}-erro` : undefined}
-          className="w-full rounded border border-input bg-background px-4 py-3 pr-11 text-sm placeholder:text-muted-foreground/70"
+          className="bg-background px-4 py-3 pr-11"
           {...props}
         />
         {password && (

@@ -3,23 +3,15 @@ import {
   createRoute,
   createRouter,
   Link,
+  lazyRouteComponent,
   Outlet,
   redirect,
 } from '@tanstack/react-router'
 import { z } from 'zod'
 import { getToken } from '@/lib/session'
 import { Layout } from '@/components/Layout'
-import { Cart } from '@/pages/Cart'
-import { Checkout } from '@/pages/Checkout'
-import { Explorer } from '@/pages/Explorer'
-import { Favorites } from '@/pages/Favorites'
 import { Home } from '@/pages/Home'
-import { Login } from '@/pages/Login'
-import { Profile } from '@/pages/Profile'
-import { Register } from '@/pages/Register'
-import { Wallets } from '@/pages/Wallets'
 import { NftDetail } from '@/pages/NftDetail'
-import { OrderPage } from '@/pages/OrderPage'
 
 const homeSearch = z.object({
   q: z.string().optional(),
@@ -69,20 +61,20 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login',
   validateSearch: z.object({ redirect: z.string().optional() }),
-  component: Login,
+  component: lazyRouteComponent(() => import('@/pages/Login'), 'Login'),
 })
 
 const registerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/register',
   validateSearch: z.object({ redirect: z.string().optional() }),
-  component: Register,
+  component: lazyRouteComponent(() => import('@/pages/Register'), 'Register'),
 })
 
 const cartRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/cart',
-  component: Cart,
+  component: lazyRouteComponent(() => import('@/pages/Cart'), 'Cart'),
 })
 
 // sem token nem tenta abrir a tela, manda direto para o login
@@ -94,41 +86,41 @@ const checkoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/checkout',
   beforeLoad: () => requireLogin('/checkout'),
-  component: Checkout,
+  component: lazyRouteComponent(() => import('@/pages/Checkout'), 'Checkout'),
 })
 
 const orderRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/orders/$id',
   beforeLoad: ({ params }) => requireLogin(`/orders/${params.id}`),
-  component: OrderPage,
+  component: lazyRouteComponent(() => import('@/pages/OrderPage'), 'OrderPage'),
 })
 
 const profileRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/profile',
   beforeLoad: () => requireLogin('/profile'),
-  component: Profile,
+  component: lazyRouteComponent(() => import('@/pages/Profile'), 'Profile'),
 })
 
 const explorerRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/tx/$hash',
-  component: Explorer,
+  component: lazyRouteComponent(() => import('@/pages/Explorer'), 'Explorer'),
 })
 
 const favoritesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/favorites',
   beforeLoad: () => requireLogin('/favorites'),
-  component: Favorites,
+  component: lazyRouteComponent(() => import('@/pages/Favorites'), 'Favorites'),
 })
 
 const walletsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/wallets',
   beforeLoad: () => requireLogin('/wallets'),
-  component: Wallets,
+  component: lazyRouteComponent(() => import('@/pages/Wallets'), 'Wallets'),
 })
 
 const routeTree = rootRoute.addChildren([
@@ -145,7 +137,8 @@ const routeTree = rootRoute.addChildren([
   orderRoute,
 ])
 
-export const router = createRouter({ routeTree })
+// Início e detalhe ficam no pacote principal (são as telas de entrada); as demais carregam sob demanda
+export const router = createRouter({ routeTree, defaultPreload: 'intent' })
 
 declare module '@tanstack/react-router' {
   interface Register {

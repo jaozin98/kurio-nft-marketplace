@@ -127,14 +127,14 @@ Rodado em `vite build` + `vite preview` com os mocks no cenário padrão, 3 medi
 
 | Página | Perfil | Performance | Acessibilidade | Boas práticas | SEO | LCP | CLS | TBT |
 |---|---|---|---|---|---|---|---|---|
-| Início | mobile | 95 | 99 | 100 | 100 | 2725 ms | 0.001 | 121 ms |
-| Detalhe | mobile | 97 | 100 | 100 | 100 | 2475 ms | 0 | 106 ms |
-| Início | desktop | 100 | 100 | 100 | 100 | 707 ms | 0.022 | 0 ms |
-| Detalhe | desktop | 99 | 100 | 100 | 100 | 623 ms | 0.056 | 0 ms |
+| Início | mobile | 92 | 99 | 100 | 100 | 2958 ms | 0.001 | 191 ms |
+| Detalhe | mobile | 93 | 100 | 100 | 100 | 2914 ms | 0 | 158 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 783 ms | 0.022 | 0 ms |
+| Detalhe | desktop | 99 | 100 | 100 | 100 | 734 ms | 0.056 | 0 ms |
 
 Medido na versão final da interface (rodapé completo, seções da Home, fotos novas e mobile), em 29/10/2026.
 
-Ambiente: Lighthouse 13.6.0, Chromium 156.0.8078.4 (o do Playwright), Node 22, macOS arm64 com 8 núcleos. Todas as metas foram atingidas. O LCP no mobile (cerca de 2,5 s, com a rede 4G lenta simulada pelo Lighthouse) é o maior valor: o elemento é a foto principal do NFT. As imagens têm tamanho fixo e prioridade de carregamento, e o CLS fica em 0 no mobile. Não otimizei o peso das imagens além disso.
+Ambiente: Lighthouse 13.6.0, Chromium 156.0.8078.4 (o do Playwright), Node 22, macOS arm64 com 8 núcleos. Todas as metas foram atingidas. O LCP no mobile (cerca de 2,9 s, com a rede 4G lenta simulada pelo Lighthouse) é o maior valor: o elemento é a foto principal do NFT. As imagens têm tamanho fixo e prioridade de carregamento, e o CLS fica em 0 no mobile. Não otimizei o peso das imagens além disso.
 
 ## Deploy
 

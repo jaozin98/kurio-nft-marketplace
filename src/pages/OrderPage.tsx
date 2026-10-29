@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { Link, Navigate, useParams } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { MailCheck } from 'lucide-react'

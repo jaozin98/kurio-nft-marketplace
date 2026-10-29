@@ -106,7 +106,7 @@ O Socket.IO é simulado com `ws.link` do MSW e `@mswjs/socket.io-binding`; o cli
 
 ## Acessibilidade
 
-Skip link, foco visível global, `<main>` focável, labels e mensagens de erro ligadas por `aria-describedby` e `aria-invalid`, controles de grupo (`radiogroup` das edições, `group` da quantidade), regiões `aria-live` para mutations e eventos em tempo real, e `prefers-reduced-motion` desliga o shimmer. A gaveta de filtros usa `<dialog>` modal com ciclo de foco próprio, `Esc` para fechar e retorno do foco ao botão. O axe não encontra violações sérias ou críticas em início, detalhe, carrinho, login, cadastro e pagamento.
+Skip link, foco visível global, `<main>` focável, labels e mensagens de erro ligadas por `aria-describedby` e `aria-invalid`, controles de grupo (`radiogroup` das edições, `group` da quantidade), regiões `aria-live` para mutations e eventos em tempo real, e `prefers-reduced-motion` desliga o shimmer. A gaveta de filtros usa o `Dialog` do shadcn/ui (Base UI), com foco preso, `Esc` para fechar e retorno do foco ao botão. O axe não encontra violações sérias ou críticas em início, detalhe, carrinho, login, cadastro e pagamento.
 
 ## Campos de carteira, perfil e pagamento
 
@@ -123,7 +123,7 @@ No pagamento os campos vêm preenchidos pela conta e pela carteira escolhida (o 
 - O asterisco de campo obrigatório fica fora do `<label>`, então o nome acessível do campo é só o texto ("Rede", e não "Rede*"); o asterisco é decorativo (`aria-hidden`) e o campo leva `aria-required`.
 - As telas de produto e carrinho marcam "Mercado" como página atual, como no Figma, com sublinhado além da cor.
 - Itens que levam a páginas fora do escopo (menu, rodapé, menu lateral da conta, "Esqueceu a senha?", login com Google e Facebook, redes sociais) ficam esmaecidos e desabilitados, com `aria-disabled` ou `disabled`, para não parecerem funcionar.
-- Login, Cadastro, a gaveta de filtros e a revisão do pedido usam `<dialog>` modal, com foco preso (ciclo de Tab), `Esc` para fechar e retorno do foco; o foco inicial vai para o primeiro campo.
+- Login, Cadastro, a gaveta de filtros e a revisão do pedido usam o `Dialog` do shadcn/ui (Base UI), com foco preso, `Esc` para fechar e retorno do foco; o foco inicial vai para o primeiro campo. Como o diálogo é renderizado num portal, ele fica fora do `<main>`.
 - Botão de mostrar e ocultar senha com `aria-pressed`.
 - Seleção do navegador, cursor, rádios, controles deslizantes e barras de rolagem usam a cor de destaque.
 - Controles de quantidade, abas e paginação ganharam nomes acessíveis e ícones desenhados em SVG, no lugar de símbolos de texto.
@@ -159,3 +159,8 @@ No pagamento os campos vêm preenchidos pela conta e pela carteira escolhida (o 
 - **Largura de 768 px:** é testada só quanto à rolagem horizontal; não há baseline visual dedicada.
 - **Baselines visuais:** foram geradas no macOS. Em outro sistema a renderização de fonte pode diferir um pouco e exigir `npm run test:visual:update`.
 - **Lighthouse:** as metas foram atingidas. O maior valor é o LCP do mobile (cerca de 2,5 a 2,7 s com a rede 4G lenta simulada), cujo elemento é a foto principal. Trocar as fotos dos cards por miniaturas de 400 px não mudou esse número, então o peso da imagem não é o gargalo: o tempo vai para baixar o JS, iniciar o MSW e esperar a API antes de a foto aparecer. Num backend real, sem o MSW, esse trecho seria menor.
+
+## Componentes shadcn/ui e bundle
+
+- Em `src/components/ui/` ficam `Button`, `Dialog`, `Input`, `Label` e `Skeleton`, adaptados à identidade do projeto (cores do overlay, bordas, shimmer). `Field`, `AuthField`, os três diálogos e todos os skeletons usam esses componentes. `cn` vem de `clsx` com `tailwind-merge`.
+- Início e detalhe do NFT, as telas de entrada auditadas no Lighthouse, ficam no pacote principal. As demais rotas carregam sob demanda (`lazyRouteComponent`) e o router pré-carrega ao passar o mouse ou focar o link (`defaultPreload: 'intent'`). O chunk principal caiu de 615 kB para 448 kB; o MSW (458 kB) é um chunk à parte, só do build com mocks.

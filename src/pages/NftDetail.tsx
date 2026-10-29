@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { Link, useNavigate, useParams } from '@tanstack/react-router'
 import { isAxiosError } from 'axios'
 import { useEffect, useState } from 'react'

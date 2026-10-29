@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { useState } from 'react'
 import type { FilterMeta, NftFilters } from '@/types'
 

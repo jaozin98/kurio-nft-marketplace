@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { useState, type FormEvent } from 'react'
 import { AccountLayout } from '@/components/AccountLayout'
 import { Private } from '@/components/Private'

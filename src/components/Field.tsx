@@ -1,5 +1,7 @@
 import { Eye, EyeOff } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+import { Input } from '@/components/ui/input'
+import { Label as LabelPrimitive } from '@/components/ui/label'
 
 const control =
   'w-full rounded border border-input bg-card px-3 py-2.5 text-sm placeholder:text-muted-foreground/70 disabled:opacity-60'
@@ -8,14 +10,14 @@ const control =
 function Label({ id, children, required, hidden }: { id: string; children: ReactNode; required?: boolean; hidden?: boolean }) {
   if (hidden) {
     return (
-      <label htmlFor={id} className="sr-only">
+      <LabelPrimitive htmlFor={id} className="sr-only">
         {children}
-      </label>
+      </LabelPrimitive>
     )
   }
   return (
     <div className="mb-1.5 flex items-baseline gap-1 text-sm">
-      <label htmlFor={id}>{children}</label>
+      <LabelPrimitive htmlFor={id}>{children}</LabelPrimitive>
       {required && (
         <span aria-hidden className="text-primary">
           *
@@ -68,7 +70,7 @@ export function Field({
   maxLength,
 }: FieldProps) {
   const input = (
-    <input
+    <Input
       id={id}
       type={type}
       value={value}
@@ -80,7 +82,7 @@ export function Field({
       aria-invalid={!!error}
       aria-required={required}
       aria-describedby={error ? `${id}-erro` : undefined}
-      className={prefix ? `${control} rounded-l-none` : control}
+      className={prefix ? 'rounded-l-none' : undefined}
     />
   )
 
@@ -161,7 +163,7 @@ export function PasswordField(props: Omit<FieldProps, 'type' | 'prefix'>) {
         {props.label}
       </Label>
       <div className="relative">
-        <input
+        <Input
           id={props.id}
           type={shown ? 'text' : 'password'}
           value={props.value}
@@ -169,7 +171,7 @@ export function PasswordField(props: Omit<FieldProps, 'type' | 'prefix'>) {
           onChange={(event) => props.onChange(event.target.value)}
           aria-invalid={!!props.error}
           aria-describedby={props.error ? `${props.id}-erro` : undefined}
-          className={`${control} pr-11`}
+          className="pr-11"
         />
         <button
           type="button"

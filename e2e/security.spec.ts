@@ -49,7 +49,9 @@ test.describe('acesso direto a cada tela prevista', () => {
   for (const [path, text] of publicPages) {
     test(`${path} abre direto`, async ({ page }) => {
       await page.goto(path)
-      await expect(page.getByRole('main')).toContainText(text)
+      // login e cadastro são diálogos, que ficam fora do <main>
+      const area = path === '/login' || path === '/register' ? page.getByRole('dialog') : page.getByRole('main')
+      await expect(area).toContainText(text)
     })
   }
 
@@ -61,9 +63,9 @@ test.describe('acesso direto a cada tela prevista', () => {
   }
 
   for (const [path, heading] of [
-    ['/profile', 'Perfil do colecionador'],
-    ['/wallets', 'Carteiras'],
-    ['/checkout', 'Pagamento'],
+    ['/profile', /^Perfil do colecionador$/],
+    ['/wallets', /^Carteiras$/],
+    ['/checkout', /^Pagamento/],
   ] as const) {
     test(`${path} logado abre direto, inclusive após refresh`, async ({ page }) => {
       await addToCart(page, '4')

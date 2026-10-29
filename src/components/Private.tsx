@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { Navigate } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { useSession } from '@/features/auth/queries'

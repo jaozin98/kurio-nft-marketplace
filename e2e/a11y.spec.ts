@@ -58,8 +58,10 @@ test.describe('teclado e foco', () => {
     // o foco fica dentro da gaveta mesmo depois de muitos Tab
     for (let i = 0; i < 30; i++) {
       await page.keyboard.press('Tab')
-      const inside = await page.evaluate(() => !!document.activeElement?.closest('dialog'))
-      expect(inside).toBe(true)
+      // o Base UI devolve o foco do elemento-guarda para dentro do diálogo logo após o Tab
+      await expect
+        .poll(() => page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]')))
+        .toBe(true)
     }
 
     await page.keyboard.press('Escape')

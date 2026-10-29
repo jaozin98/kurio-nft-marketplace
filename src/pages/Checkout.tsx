@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { Link, Navigate, useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { BackButton } from '@/components/BackButton'
@@ -20,7 +20,7 @@ import {
 } from '@/features/wallets/queries'
 import { errorMessage } from '@/lib/api'
 import { formatEth, fromUnits, toUnits } from '@/lib/eth'
-import { trapFocus } from '@/lib/focusTrap'
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { editionOf } from '@/lib/nft'
 import { queryClient } from '@/lib/queryClient'
 import { networkLabels, providerLabels, validateCollector } from '@/lib/validation'
@@ -508,27 +508,16 @@ type ReviewProps = {
 // revisão antes do envio, num modal (foco preso, Esc volta ao formulário)
 function ReviewDialog(props: ReviewProps) {
   const { open, onCancel, onConfirm, values, wallet, network, quote, pending, stale, unavailable } = props
-  const ref = useRef<HTMLDialogElement>(null)
-
-  useEffect(() => {
-    const dialog = ref.current
-    if (!dialog) return
-    if (open && !dialog.open) dialog.showModal()
-    if (!open && dialog.open) dialog.close()
-  }, [open])
 
   return (
-    <dialog
-      ref={ref}
-      aria-labelledby="revisao-titulo"
-      onClose={onCancel}
-      onKeyDown={trapFocus}
-      className="m-auto w-[min(560px,calc(100vw-2rem))] rounded-md border border-border bg-card p-0 text-foreground backdrop:bg-black/70 max-md:m-0 max-md:ml-auto max-md:h-dvh max-md:max-h-none max-md:w-full max-md:max-w-none max-md:rounded-none"
-    >
+    // Esc e o clique no fundo voltam ao formulário, exceto enquanto o pedido é enviado
+    <Dialog open={open} onOpenChange={(next) => !next && !pending && onCancel()}>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[min(560px,calc(100vw-2rem))] max-w-none gap-0 rounded-md border border-border bg-card p-0 text-foreground ring-0 sm:max-w-none max-md:left-auto max-md:right-0 max-md:top-0 max-md:h-dvh max-md:w-full max-md:translate-x-0 max-md:translate-y-0 max-md:overflow-y-auto max-md:rounded-none"
+      >
       <div className="space-y-5 p-6">
-        <h2 id="revisao-titulo" className="text-xl font-bold">
-          Revise seu pedido
-        </h2>
+        <DialogTitle className="text-xl font-bold">Revise seu pedido</DialogTitle>
 
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded bg-secondary p-4 text-sm">
           <dt className="text-muted-foreground">Colecionador</dt>
@@ -620,7 +609,7 @@ function ReviewDialog(props: ReviewProps) {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => ref.current?.close()}
+            onClick={onCancel}
             disabled={pending}
             className="rounded border border-border px-5 py-3"
           >
@@ -637,6 +626,7 @@ function ReviewDialog(props: ReviewProps) {
         </div>
       </div>
       <div aria-hidden className="h-1.5 bg-primary" />
-    </dialog>
+      </DialogContent>
+    </Dialog>
   )
 }

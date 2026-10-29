@@ -1,4 +1,4 @@
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from '@/components/ui/skeleton'
 import { Link, useNavigate, useRouterState, useSearch } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { FiltersPanel } from '@/components/FiltersPanel'
@@ -7,7 +7,7 @@ import { ChevronRightIcon, CloseIcon, SearchIcon } from '@/components/icons'
 import { NftCard, NftCardSkeleton } from '@/components/NftCard'
 import { useFeaturedNft, useFilterMeta, useNftList } from '@/features/nfts/queries'
 import { formatEth } from '@/lib/eth'
-import { trapFocus } from '@/lib/focusTrap'
+import { Dialog, DialogClose, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import type { NftFilters, NftSort, NftTab } from '@/types'
 
 const sortOptions: { value: NftSort; label: string }[] = [
@@ -31,7 +31,7 @@ export function Home() {
   const { data, isPending, isError, isFetching, refetch } = useNftList(search as NftFilters)
   const { data: meta } = useFilterMeta()
   const filters = search as NftFilters
-  const drawer = useRef<HTMLDialogElement>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   const [text, setText] = useState(search.q ?? '')
   const searchInput = useRef<HTMLInputElement>(null)
@@ -75,33 +75,26 @@ export function Home() {
         </aside>
 
         <section aria-label="Catálogo">
-          <dialog
-            ref={drawer}
-            aria-labelledby="filtros-titulo"
-            onClick={(event) => event.target === drawer.current && drawer.current?.close()}
-            onKeyDown={trapFocus}
-            className="fixed inset-y-0 right-0 m-0 h-dvh max-h-none w-[min(360px,92vw)] overflow-y-auto border-l border-border bg-card p-4 text-foreground backdrop:bg-black/70"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 id="filtros-titulo" className="text-xl font-bold">
-                Filtros
-              </h2>
-              <button
-                onClick={() => drawer.current?.close()}
-                aria-label="Fechar filtros"
-                className="grid size-9 place-items-center rounded border border-border"
-              >
-                <CloseIcon className="size-4" />
-              </button>
-            </div>
-            <FiltersPanel idPrefix="gaveta" meta={meta} filters={filters} onChange={update} />
-            <button
-              onClick={() => drawer.current?.close()}
-              className="mt-6 w-full rounded bg-primary py-3 font-bold text-primary-foreground"
+          <Dialog open={drawerOpen} onOpenChange={setDrawerOpen}>
+            <DialogContent
+              showCloseButton={false}
+              className="inset-y-0 left-auto right-0 top-0 h-dvh w-[min(360px,92vw)] max-w-none translate-x-0 translate-y-0 gap-0 overflow-y-auto rounded-none border-l border-border bg-card p-4 text-foreground ring-0 sm:max-w-none"
             >
-              Ver {data ? `${data.total} resultados` : 'resultados'}
-            </button>
-          </dialog>
+              <div className="mb-4 flex items-center justify-between">
+                <DialogTitle className="text-xl font-bold">Filtros</DialogTitle>
+                <DialogClose
+                  aria-label="Fechar filtros"
+                  className="grid size-9 place-items-center rounded border border-border"
+                >
+                  <CloseIcon className="size-4" />
+                </DialogClose>
+              </div>
+              <FiltersPanel idPrefix="gaveta" meta={meta} filters={filters} onChange={update} />
+              <DialogClose className="mt-6 w-full rounded bg-primary py-3 font-bold text-primary-foreground">
+                Ver {data ? `${data.total} resultados` : 'resultados'}
+              </DialogClose>
+            </DialogContent>
+          </Dialog>
 
           <div className="mb-6 flex gap-2">
             <div className="relative flex-1">
@@ -120,7 +113,7 @@ export function Home() {
             />
             </div>
             <button
-              onClick={() => drawer.current?.showModal()}
+              onClick={() => setDrawerOpen(true)}
               aria-label="Filtros"
               className="cta grid size-11 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground lg:hidden"
             >

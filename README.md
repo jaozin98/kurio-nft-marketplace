@@ -1,5 +1,8 @@
 # Kurio, marketplace de NFTs
 
+- **Aplicação publicada:** https://kurio-nft-marketplace-mbwl.vercel.app
+- **Repositório:** https://github.com/jaozin98/kurio-nft-marketplace
+
 Solução do desafio de frontend: marketplace de NFTs em React e TypeScript, com a API, o login, as carteiras e os pagamentos simulados por MSW. Decisões de arquitetura, contratos e limitações estão em [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## O que tem
@@ -26,6 +29,7 @@ npm run dev                       # http://localhost:5173 com os mocks ativos
 | `npm run typecheck` | `tsc -b` |
 | `npm run lint` | oxlint |
 | `npm run test:e2e` | todos os testes Playwright (desktop 1440 px e mobile 390 px) |
+| `LIVE_URL=<url> npm run test:e2e:live` | a mesma suíte contra um site já publicado, sem servidor local |
 | `npm run test:visual` | só a regressão visual |
 | `npm run test:visual:update` | regrava as baselines (`e2e/__screenshots__/`) |
 | `npm run lighthouse` | auditoria Lighthouse (precisa de `npm run build` antes) |
@@ -134,14 +138,16 @@ Ambiente: Lighthouse 13.6.0, Chromium 156.0.8078.4 (o do Playwright), Node 22, m
 
 ## Deploy
 
-O `vercel.json` já tem o fallback de SPA, para acesso direto e refresh funcionarem em qualquer rota. Para publicar:
+Publicado na Vercel, a partir do repositório do GitHub (cada push na `main` gera um novo deploy de produção):
 
-```bash
-npm i -g vercel
-vercel --prod
-```
+- Aplicação: https://kurio-nft-marketplace-mbwl.vercel.app
+- Repositório: https://github.com/jaozin98/kurio-nft-marketplace
 
-ou conecte o repositório pela Vercel (build `npm run build`, saída `dist`). O build publicado usa os mocks e o Socket.IO simulado, sem backend. **Esta entrega ainda não foi publicada**: o deploy depende de uma conta, então fica para quem for publicar. Depois de publicar, confira o acesso direto a `/nft/4` e o refresh em `/cart`.
+O `vercel.json` tem o fallback de SPA, então o acesso direto e o refresh funcionam em qualquer rota (por exemplo `/nft/4`, `/cart` e `/profile`). O build publicado usa os mocks do MSW e o Socket.IO simulado, sem backend e sem variáveis de ambiente.
+
+Para publicar outra cópia: `npm i -g vercel && vercel --prod`, ou importe o repositório pela Vercel (build `npm run build`, saída `dist`).
+
+**Verificação do ambiente publicado:** 176 testes E2E (segurança e acesso direto, checkout, tempo real, catálogo e conta) passaram contra a URL acima, nos viewports desktop e mobile. Para repetir: `LIVE_URL=https://kurio-nft-marketplace-mbwl.vercel.app npm run test:e2e:live -- e2e/security.spec.ts e2e/checkout.spec.ts e2e/realtime.spec.ts`.
 
 ## Arte dos NFTs
 

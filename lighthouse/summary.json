@@ -7,7 +7,7 @@
     "cpus": 8,
     "build": "vite build + vite preview, mocks MSW ativos (cenário padrão)",
     "runsPerPage": 3,
-    "date": "2026-10-29T18:35:32.092Z"
+    "date": "2026-10-29T21:14:01.572Z"
   },
   "results": [
     {
@@ -16,36 +16,36 @@
       "runs": [
         {
           "scores": {
+            "performance": 93,
+            "accessibility": 99,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "lcp": 2849.765775,
+          "cls": 0.001299077571787653,
+          "tbt": 172
+        },
+        {
+          "scores": {
             "performance": 94,
             "accessibility": 99,
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2617.09,
-          "cls": 0,
-          "tbt": 178
+          "lcp": 2702.5025,
+          "cls": 0.001299077571787653,
+          "tbt": 161
         },
         {
           "scores": {
-            "performance": 96,
+            "performance": 95,
             "accessibility": 99,
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2555.3199999999997,
-          "cls": 0,
-          "tbt": 116
-        },
-        {
-          "scores": {
-            "performance": 92,
-            "accessibility": 99,
-            "best-practices": 100,
-            "seo": 100
-          },
-          "lcp": 2621.5775000000003,
-          "cls": 0,
-          "tbt": 238.65775000000008
+          "lcp": 2659.8599999999997,
+          "cls": 0.001299077571787653,
+          "tbt": 158
         }
       ],
       "median": {
@@ -53,9 +53,9 @@
         "accessibility": 99,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 2617,
-        "cls": 0,
-        "tbtMs": 178
+        "lcpMs": 2703,
+        "cls": 0.001,
+        "tbtMs": 161
       }
     },
     {
@@ -69,9 +69,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2470.28975,
+          "lcp": 2473.0732500000004,
           "cls": 0,
-          "tbt": 119.5
+          "tbt": 119.20732500000008
         },
         {
           "scores": {
@@ -80,9 +80,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2456.08,
+          "lcp": 2458.2110000000002,
           "cls": 0,
-          "tbt": 98.60799999999995
+          "tbt": 110.5
         },
         {
           "scores": {
@@ -91,9 +91,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2460.785,
+          "lcp": 2453.4354999999996,
           "cls": 0,
-          "tbt": 97.97849999999994
+          "tbt": 123
         }
       ],
       "median": {
@@ -101,9 +101,9 @@
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 2461,
+        "lcpMs": 2458,
         "cls": 0,
-        "tbtMs": 99
+        "tbtMs": 119
       }
     },
     {
@@ -117,7 +117,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 584.70825,
+          "lcp": 742.862,
           "cls": 0.021682686279660274,
           "tbt": 0
         },
@@ -128,18 +128,18 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 584.2012500000001,
+          "lcp": 732.9365,
           "cls": 0.021682686279660274,
           "tbt": 0
         },
         {
           "scores": {
-            "performance": 100,
+            "performance": 99,
             "accessibility": 100,
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 580.1475,
+          "lcp": 836.21575,
           "cls": 0.021682686279660274,
           "tbt": 0
         }
@@ -149,7 +149,7 @@
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 584,
+        "lcpMs": 743,
         "cls": 0.022,
         "tbtMs": 0
       }
@@ -165,7 +165,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 564.317,
+          "lcp": 563.2199999999999,
           "cls": 0.05569113912967341,
           "tbt": 0
         },
@@ -176,7 +176,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 623.37,
+          "lcp": 618.285,
           "cls": 0.05569113912967341,
           "tbt": 0
         },
@@ -187,7 +187,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 613.62775,
+          "lcp": 619.861,
           "cls": 0.05569113912967341,
           "tbt": 0
         }
@@ -197,7 +197,7 @@
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 614,
+        "lcpMs": 618,
         "cls": 0.056,
         "tbtMs": 0
       }

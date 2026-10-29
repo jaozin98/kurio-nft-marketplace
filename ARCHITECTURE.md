@@ -154,4 +154,4 @@ No pagamento os campos vêm preenchidos pela conta e pela carteira escolhida (o 
 - **Preço por edição:** é o mesmo para todas as edições de um NFT.
 - **Largura de 768 px:** é testada só quanto à rolagem horizontal; não há baseline visual dedicada.
 - **Baselines visuais:** foram geradas no macOS. Em outro sistema a renderização de fonte pode diferir um pouco e exigir `npm run test:visual:update`.
-- **Lighthouse:** os números do README foram medidos antes das últimas mudanças de interface (rodapé, novas seções da Home, fotos novas e mobile). `npm run lighthouse` repete a auditoria.
+- **Lighthouse:** as metas foram atingidas na versão final. O maior valor é o LCP do mobile (cerca de 2,5 a 2,7 s com a rede 4G lenta simulada), cujo elemento é a foto principal; as imagens têm tamanho fixo e prioridade de carregamento, e o CLS fica perto de 0. Não otimizei o peso das imagens além disso.

@@ -123,16 +123,16 @@ Os testes de REST passam pelos handlers do MSW, e os de tempo real passam pelo `
 
 ## Lighthouse
 
-> Estes números foram medidos **antes** das últimas mudanças de interface (rodapé completo, novas seções da Home, fotos novas e mobile). Rode `npm run build && npm run lighthouse` para atualizar `lighthouse/` e esta tabela.
-
 Rodado em `vite build` + `vite preview` com os mocks no cenário padrão, 3 medições por página e perfil (mediana). Os relatórios HTML e JSON de cada medição estão em `lighthouse/reports/`, e o resumo em `lighthouse/summary.md`. O script `scripts/lighthouse.mjs` contém a configuração.
 
 | Página | Perfil | Performance | Acessibilidade | Boas práticas | SEO | LCP | CLS | TBT |
 |---|---|---|---|---|---|---|---|---|
-| Início | mobile | 94 | 99 | 100 | 100 | 2617 ms | 0 | 178 ms |
-| Detalhe | mobile | 97 | 100 | 100 | 100 | 2461 ms | 0 | 99 ms |
-| Início | desktop | 100 | 100 | 100 | 100 | 584 ms | 0.022 | 0 ms |
-| Detalhe | desktop | 99 | 100 | 100 | 100 | 614 ms | 0.056 | 0 ms |
+| Início | mobile | 94 | 99 | 100 | 100 | 2703 ms | 0.001 | 161 ms |
+| Detalhe | mobile | 97 | 100 | 100 | 100 | 2458 ms | 0 | 119 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 743 ms | 0.022 | 0 ms |
+| Detalhe | desktop | 99 | 100 | 100 | 100 | 618 ms | 0.056 | 0 ms |
+
+Medido na versão final da interface (rodapé completo, seções da Home, fotos novas e mobile), em 29/10/2026.
 
 Ambiente: Lighthouse 13.6.0, Chromium 156.0.8078.4 (o do Playwright), Node 22, macOS arm64 com 8 núcleos. Todas as metas foram atingidas. O LCP no mobile (cerca de 2,5 s, com a rede 4G lenta simulada pelo Lighthouse) é o maior valor: o elemento é a foto principal do NFT. As imagens têm tamanho fixo e prioridade de carregamento, e o CLS fica em 0 no mobile. Não otimizei o peso das imagens além disso.
 

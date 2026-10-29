@@ -123,6 +123,7 @@ function NftView({ nft }: { nft: Nft }) {
               alt={`${nft.name}, imagem ${selected + 1} de ${nft.gallery.length}`}
               width={600}
               height={600}
+              fetchPriority="high"
               className="aspect-square w-full rounded-xl object-cover"
             />
           </div>

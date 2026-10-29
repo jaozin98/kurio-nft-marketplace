@@ -116,12 +116,12 @@ Rodado em `vite build` + `vite preview` com os mocks no cenário padrão, 3 medi
 
 | Página | Perfil | Performance | Acessibilidade | Boas práticas | SEO | LCP | CLS | TBT |
 |---|---|---|---|---|---|---|---|---|
-| Início | mobile | 99 | 99 | 100 | 100 | 780 ms | 0 | 128 ms |
-| Detalhe | mobile | 97 | 100 | 100 | 100 | 2442 ms | 0 | 101 ms |
-| Início | desktop | 100 | 100 | 100 | 100 | 258 ms | 0.022 | 0 ms |
-| Detalhe | desktop | 100 | 100 | 100 | 100 | 543 ms | 0.056 | 0 ms |
+| Início | mobile | 96 | 99 | 100 | 100 | 2555 ms | 0 | 135 ms |
+| Detalhe | mobile | 97 | 100 | 100 | 100 | 2453 ms | 0 | 98 ms |
+| Início | desktop | 100 | 100 | 100 | 100 | 581 ms | 0.022 | 0 ms |
+| Detalhe | desktop | 99 | 100 | 100 | 100 | 608 ms | 0.056 | 0 ms |
 
-Ambiente: Lighthouse 13.6.0, Chromium do Playwright (Chrome for Testing), Node 22, macOS arm64 com 8 núcleos. Todas as metas foram atingidas. O LCP do detalhe no mobile (2,4 s) é o mais alto: o elemento é a imagem grande do NFT, gerada no código como SVG embutido. Não investiguei a fundo o que pesa nele.
+Ambiente: Lighthouse 13.6.0, Chromium do Playwright (Chrome for Testing), Node 22, macOS arm64 com 8 núcleos. Todas as metas foram atingidas. O LCP no mobile (cerca de 2,5 s, com a rede 4G lenta simulada pelo Lighthouse) é o maior valor: o elemento é a foto principal do NFT. As imagens têm tamanho fixo e prioridade de carregamento, e o CLS fica em 0 no mobile. Não otimizei o peso das imagens além disso.
 
 ## Deploy
 
@@ -133,6 +133,10 @@ vercel --prod
 ```
 
 ou conecte o repositório pela Vercel (build `npm run build`, saída `dist`). O build publicado usa os mocks e o Socket.IO simulado, sem backend. **Esta entrega ainda não foi publicada**: o deploy depende de uma conta, então fica para quem for publicar. Depois de publicar, confira o acesso direto a `/nft/4` e o refresh em `/cart`.
+
+## Arte dos NFTs
+
+As fotos dos NFTs (4 personagens, em `public/nfts/`, 3 variantes de cada) foram recortadas de capturas de tela do Figma que o autor forneceu, porque o arquivo do Figma é só de visualização e não permite exportar os assets. Por isso a resolução é limitada (cerca de 234 a 434 px de lado, ampliada para 512). Com os arquivos originais, basta trocar os JPGs de `public/nfts/` mantendo os nomes. Como há só 4 personagens, os 48 NFTs do catálogo repetem a arte, como no próprio Figma.
 
 ## Estrutura
 

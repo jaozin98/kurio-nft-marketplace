@@ -270,6 +270,7 @@ function Hero() {
             alt={`NFT em destaque: ${featured.name}`}
             width={368}
             height={368}
+            fetchPriority="high"
             className="size-full object-cover"
           />
         </Link>

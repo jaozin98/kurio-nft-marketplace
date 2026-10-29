@@ -102,7 +102,7 @@ Skip link, foco visível global, `<main>` focável, labels e mensagens de erro l
 
 ## Desvios em relação ao Figma e limitações
 
-- **Imagens:** os macacos do arquivo não puderam ser exportados (arquivo só de visualização). As obras são ilustrações geradas em código (SVG), com as mesmas proporções.
+- **Imagens:** o arquivo do Figma é só de visualização e não exporta assets. A arte dos 4 personagens vem de capturas de tela fornecidas pelo autor e recortadas, em baixa resolução (234 a 434 px de lado, ampliadas para 512). Os 48 NFTs repetem esses 4 personagens, como o Figma. Os arquivos originais substituem os de `public/nfts/` sem mudar código.
 - **Fonte:** o arquivo usa uma variável de fonte que não consegui ler. Identifiquei **Roboto Mono** pelo desenho das letras. Tamanhos, pesos e alturas de linha de título, corpo, rótulo, menu e botão vieram do painel de propriedades.
 - **Cores:** fundo `#140D0A`, texto `#F5F1EB`, laranja `#E89B55` e texto secundário `#CFB28C` foram lidos do Figma. O fundo dos painéis (`#1D1410`) e a cor das bordas (`#3A2A20`) são estimados pelo screenshot.
 - **Telas ajustadas ao Figma:** Início, detalhe e carrinho. Pagamento, confirmação, login, cadastro, perfil e carteiras usam os mesmos tokens, mas **não foram comparados tela a tela**. No Figma, login e cadastro são modais sobre a Home; aqui são páginas. Os frames mobile do Figma não foram comparados. O layout é responsivo: as larguras 390, 768 e 1440 px têm teste de ausência de rolagem horizontal, e 390 e 1440 px têm baselines visuais.

@@ -28,15 +28,12 @@ const networkIds = ['ethereum', 'polygon', 'solana'] as const
 
 const rarities: Rarity[] = ['comum', 'raro', 'lendario']
 
-// placeholder enquanto as imagens do Figma não estão disponíveis
-function artwork(n: number, hue: number) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
-<rect width="400" height="400" fill="hsl(${hue} 30% 20%)"/>
-<circle cx="200" cy="160" r="95" fill="hsl(${hue} 45% 62%)"/>
-<rect x="105" y="250" width="190" height="170" rx="70" fill="hsl(${hue} 40% 42%)"/>
-<text x="200" y="380" text-anchor="middle" font-size="26" fill="#fff" font-family="monospace">#${n}</text>
-</svg>`
-  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+// Arte dos quatro personagens do Figma, em public/nfts/<personagem>-<variante>.jpg.
+// a = enquadramento do card, b = recorte apertado, c = card espelhado.
+const characters = ['monkey', 'gorilla', 'chimp', 'orange'] as const
+
+function artwork(n: number, variant: 'a' | 'b' | 'c') {
+  return `/nfts/${characters[(n - 1) % characters.length]}-${variant}.jpg`
 }
 
 const editionList: [string, string][] = [
@@ -68,8 +65,8 @@ export function createNfts(): Nft[] {
       rarity: rarities[(n * 7) % 3],
       price: (0.4 + ((n * 37) % 90) / 100).toFixed(2),
       editions: createEditions(n),
-      image: artwork(n, (n * 47) % 360),
-      gallery: [0, 40, 80].map((shift) => artwork(n, ((n * 47) + shift) % 360)),
+      image: artwork(n, 'a'),
+      gallery: [artwork(n, 'a'), artwork(n, 'b'), artwork(n, 'c')],
       description: `Obra digital da coleção ${collections[i % collections.length]}, com ${editionList.length} edições numeradas e certificado de autenticidade.`,
       // a cada três NFTs, um aparece com o preço anterior riscado, como no Figma
       compareAt: n % 3 === 0 ? (0.4 + ((n * 37) % 90) / 100 + 0.3).toFixed(2) : null,

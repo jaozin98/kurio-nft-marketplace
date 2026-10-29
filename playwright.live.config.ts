@@ -9,6 +9,8 @@ if (!baseURL) throw new Error('Defina LIVE_URL com o endereço publicado.')
 export default defineConfig({
   ...base,
   reporter: [['dot']],
+  // contra o site publicado, vários workers deixam os testes sensíveis a tempo instáveis
+  workers: 1,
   use: { ...base.use, baseURL },
   webServer: undefined,
 })

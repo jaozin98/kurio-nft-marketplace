@@ -147,7 +147,7 @@ O `vercel.json` tem o fallback de SPA, então o acesso direto e o refresh funcio
 
 Para publicar outra cópia: `npm i -g vercel && vercel --prod`, ou importe o repositório pela Vercel (build `npm run build`, saída `dist`).
 
-**Verificação do ambiente publicado:** 176 testes E2E (segurança e acesso direto, checkout, tempo real, catálogo e conta) passaram contra a URL acima, nos viewports desktop e mobile. Para repetir: `LIVE_URL=https://kurio-nft-marketplace-mbwl.vercel.app npm run test:e2e:live -- e2e/security.spec.ts e2e/checkout.spec.ts e2e/realtime.spec.ts`.
+**Verificação do ambiente publicado:** 100 testes E2E (segurança e acesso direto, checkout e tempo real) passaram contra a URL acima, nos viewports desktop e mobile. A configuração roda em série (`workers: 1`), porque com vários workers os testes sensíveis a tempo oscilam contra o site publicado. Para repetir: `LIVE_URL=https://kurio-nft-marketplace-mbwl.vercel.app npm run test:e2e:live -- e2e/security.spec.ts e2e/checkout.spec.ts e2e/realtime.spec.ts`.
 
 ## Arte dos NFTs
 

@@ -310,10 +310,11 @@ test('trocar de carteira troca rede, tipo e dados do formulário', async ({ page
 
 test('campos obrigatórios vazios mostram erro e não abrem a revisão', async ({ page }) => {
   await startCheckout(page)
-  await page.getByLabel('Código de indicação').fill('')
-  await page.getByLabel('Nome do perfil').fill('x')
   await page.getByRole('button', { name: 'Conectar carteira' }).click()
   await expect(page.getByText('Conectada')).toBeVisible()
+  // conectar preenche os campos pela carteira; só depois de conectada dá para esvaziá-los
+  await page.getByLabel('Código de indicação').fill('')
+  await page.getByLabel('Nome do perfil').fill('x')
   await page.getByRole('button', { name: 'Revisar pedido' }).click()
 
   await expect(page.getByText('Use de 4 a 12 letras ou números')).toBeVisible()

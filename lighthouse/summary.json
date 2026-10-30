@@ -7,7 +7,7 @@
     "cpus": 8,
     "build": "vite build + vite preview, mocks MSW ativos (cenário padrão)",
     "runsPerPage": 3,
-    "date": "2026-10-29T22:10:07.171Z"
+    "date": "2026-10-30T01:57:10.900Z"
   },
   "results": [
     {
@@ -16,14 +16,14 @@
       "runs": [
         {
           "scores": {
-            "performance": 89,
+            "performance": 88,
             "accessibility": 99,
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 3094.4143999999997,
+          "lcp": 3053.9594500000003,
           "cls": 0.00120920428065769,
-          "tbt": 243
+          "tbt": 281
         },
         {
           "scores": {
@@ -32,9 +32,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2958.3293000000003,
+          "lcp": 2970.4412,
           "cls": 0.00120920428065769,
-          "tbt": 186
+          "tbt": 199
         },
         {
           "scores": {
@@ -43,9 +43,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2922.0891,
+          "lcp": 2986.6484000000005,
           "cls": 0.00120920428065769,
-          "tbt": 191
+          "tbt": 170
         }
       ],
       "median": {
@@ -53,9 +53,9 @@
         "accessibility": 99,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 2958,
+        "lcpMs": 2987,
         "cls": 0.001,
-        "tbtMs": 191
+        "tbtMs": 199
       }
     },
     {
@@ -69,9 +69,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2913.4200000000005,
+          "lcp": 2917.8016000000002,
           "cls": 0,
-          "tbt": 163
+          "tbt": 153
         },
         {
           "scores": {
@@ -80,9 +80,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2914.2137999999995,
+          "lcp": 2885.2021999999997,
           "cls": 0,
-          "tbt": 148
+          "tbt": 142
         },
         {
           "scores": {
@@ -91,9 +91,9 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 2958.2321,
+          "lcp": 2914.6288000000004,
           "cls": 0,
-          "tbt": 158
+          "tbt": 166
         }
       ],
       "median": {
@@ -101,9 +101,9 @@
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 2914,
+        "lcpMs": 2915,
         "cls": 0,
-        "tbtMs": 158
+        "tbtMs": 153
       }
     },
     {
@@ -117,7 +117,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 783.1298,
+          "lcp": 752.9463999999999,
           "cls": 0.021682686279660274,
           "tbt": 0
         },
@@ -128,7 +128,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 814.5108,
+          "lcp": 801.7289,
           "cls": 0.021682686279660274,
           "tbt": 0
         },
@@ -139,7 +139,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 765.5849,
+          "lcp": 744.2468000000001,
           "cls": 0.021682686279660274,
           "tbt": 0
         }
@@ -149,7 +149,7 @@
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 783,
+        "lcpMs": 753,
         "cls": 0.022,
         "tbtMs": 0
       }
@@ -165,7 +165,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 742.5091999999999,
+          "lcp": 735.0684999999999,
           "cls": 0.05569113912967341,
           "tbt": 0
         },
@@ -176,7 +176,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 733.8331000000001,
+          "lcp": 726.7037,
           "cls": 0.05569113912967341,
           "tbt": 0
         },
@@ -187,7 +187,7 @@
             "best-practices": 100,
             "seo": 100
           },
-          "lcp": 732.7110000000001,
+          "lcp": 725.6263000000001,
           "cls": 0.05569113912967341,
           "tbt": 0
         }
@@ -197,7 +197,7 @@
         "accessibility": 100,
         "best-practices": 100,
         "seo": 100,
-        "lcpMs": 734,
+        "lcpMs": 727,
         "cls": 0.056,
         "tbtMs": 0
       }

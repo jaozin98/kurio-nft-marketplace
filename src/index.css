@@ -178,4 +178,14 @@ textarea {
   html {
     @apply font-sans;
   }
+  /* a lista aberta do select é do navegador: o tema escuro e as cores das opções
+     deixam ela perto do resto do site, mas o posicionamento é do sistema */
+  select {
+    color-scheme: dark;
+  }
+  option {
+    background-color: var(--card);
+    color: var(--foreground);
+    font-family: inherit;
+  }
 }

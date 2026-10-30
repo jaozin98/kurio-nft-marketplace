@@ -7,6 +7,9 @@ import { consumeFailure, currentScenario, listLatency } from '../scenario'
 
 const PAGE_SIZE = 9
 
+// buscas já respondidas, na ordem; os testes usam para saber quando uma resposta lenta saiu
+export const servedSearches: (string | null)[] = []
+
 const sorters: Record<NftSort, (a: Nft, b: Nft) => number> = {
   recent: (a, b) => Number(b.id) - Number(a.id),
   name: (a, b) => a.name.localeCompare(b.name),
@@ -42,6 +45,7 @@ export const nftHandlers = [
   http.get('/api/nfts', async ({ request }) => {
     const params = new URL(request.url).searchParams
     await delay(listLatency(params.get('q')))
+    servedSearches.push(params.get('q'))
 
     // cenários de falha: as duas primeiras listagens falham, depois o serviço volta
     const scenario = currentScenario()

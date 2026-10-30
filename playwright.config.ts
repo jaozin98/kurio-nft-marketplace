@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+// PW_PORT permite duas execuções ao mesmo tempo sem disputar a porta do servidor
+const port = Number(process.env.PW_PORT ?? 4173)
+
 export default defineConfig({
   testDir: './e2e',
   // com vários testes em paralelo a máquina fica mais lenta; 10s evita falhas por demora
@@ -9,7 +12,7 @@ export default defineConfig({
   snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}{ext}',
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
-    baseURL: 'http://localhost:4173',
+    baseURL: `http://localhost:${port}`,
     trace: 'retain-on-failure',
     // animações desligadas deixam as capturas estáveis
     contextOptions: { reducedMotion: 'reduce' },
@@ -21,8 +24,8 @@ export default defineConfig({
   // os testes rodam contra o build de produção: o servidor de desenvolvimento compila sob
   // demanda e deixa as primeiras cargas lentas e instáveis
   webServer: {
-    command: 'npm run build && npm run preview -- --port 4173 --strictPort',
-    url: 'http://localhost:4173',
+    command: `npm run build && npm run preview -- --port ${port} --strictPort`,
+    url: `http://localhost:${port}`,
     reuseExistingServer: false,
     timeout: 180_000,
   },

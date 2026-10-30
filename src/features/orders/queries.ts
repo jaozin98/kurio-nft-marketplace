@@ -84,9 +84,11 @@ export function useOrder(id: string) {
   return useQuery<Order>({
     queryKey: ['order', id],
     retry: false,
-    // o resultado chega pelo socket; só consulta por polling se ele estiver fora
+    // o resultado chega pelo socket. Enquanto o pedido está pendente, a consulta continua como
+    // rede de segurança (rápida com o socket fora, lenta com ele conectado), porque um evento
+    // pode se perder antes de o servidor associar o socket ao usuário
     refetchInterval: (query) =>
-      query.state.data?.status === 'pending' && !socketConnected ? 1500 : false,
+      query.state.data?.status === 'pending' ? (socketConnected ? 3000 : 1500) : false,
     queryFn: async ({ signal }) => {
       const { data } = await api.get<Order>(`/orders/${id}`, { signal })
       return data

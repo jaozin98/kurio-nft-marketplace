@@ -34,7 +34,7 @@ npm run dev                       # http://localhost:5173 com os mocks ativos
 | `npm run test:visual:update` | regrava as baselines (`e2e/__screenshots__/`) |
 | `npm run lighthouse` | auditoria Lighthouse (precisa de `npm run build` antes) |
 
-Os testes sobem o servidor sozinhos (`reuseExistingServer`). O relatório HTML fica em `playwright-report/` e os traces das falhas em `test-results/`.
+Os testes sobem sozinhos o build de produção (`npm run build` e `vite preview`, porta 4173; `PW_PORT` muda a porta). Rodar contra o build, e não contra o servidor de desenvolvimento, evita cargas lentas por compilação sob demanda. A suíte completa passou 5 vezes seguidas (1.540 execuções, sem retry e sem testes instáveis). O relatório HTML fica em `playwright-report/` e os traces das falhas em `test-results/`.
 
 ## Variáveis de ambiente
 
@@ -105,7 +105,7 @@ Outras regras fixas dos dados: os NFTs de número múltiplo de 7 estão esgotado
 
 ## Testes
 
-306 testes Playwright (153 por projeto: desktop 1440 px e mobile 390 px), cada um em contexto isolado:
+308 testes Playwright (154 por projeto: desktop 1440 px e mobile 390 px), cada um em contexto isolado:
 
 - `catalog.spec.ts`: busca, filtros combinados, ordenação, paginação, abas, restauração pelo histórico (voltar e avançar) e refresh.
 - `detail.spec.ts`: detalhe, edições, favoritos (com rollback) e compra.

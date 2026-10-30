@@ -2,6 +2,7 @@ import { setupWorker } from 'msw/browser'
 import { updateNft } from './admin'
 import { db, resetDb, save } from './db'
 import { handlers } from './handlers'
+import { servedSearches } from './handlers/nfts'
 import { realtimeControls } from './realtime'
 import { scenarios, setScenario, type Scenario } from './scenario'
 
@@ -14,4 +15,4 @@ if (params.get('reset') === '1') resetDb()
 export const worker = setupWorker(...handlers)
 
 // permite aos testes E2E e à demonstração alterar o estado simulado
-Object.assign(window, { __mock: { db, resetDb, save, updateNft, setScenario, realtime: realtimeControls } })
+Object.assign(window, { __mock: { db, resetDb, save, updateNft, setScenario, realtime: realtimeControls, servedSearches } })

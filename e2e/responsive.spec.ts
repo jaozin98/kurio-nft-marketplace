@@ -21,7 +21,8 @@ for (const width of widths) {
       test(`${path} sem rolagem horizontal`, async ({ page }) => {
         await page.goto(path)
         await page.getByRole('heading', { level: 1 }).waitFor()
-        await page.waitForTimeout(500)
+        await page.evaluate(() => document.fonts.ready)
+        await page.waitForFunction(() => [...document.images].every((image) => image.loading === 'lazy' || image.complete))
         await noHorizontalScroll(page)
       })
     }

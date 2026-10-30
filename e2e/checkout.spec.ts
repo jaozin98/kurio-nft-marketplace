@@ -51,7 +51,8 @@ test('carteira secundária recusa a conexão e bloqueia a revisão', async ({ pa
 
 test('pagamento recusado mantém os itens no carrinho', async ({ page }) => {
   await startCheckout(page)
-  await page.locator('#pgto-network').selectOption('arbitrum')
+  await page.locator('#pgto-network').click()
+  await page.locator('[role=option][data-value="arbitrum"]').click()
   await connectAndReview(page)
   await page.getByRole('button', { name: 'Confirmar compra' }).click()
 
@@ -293,8 +294,8 @@ test('os campos do formulário seguem o Figma e vêm preenchidos pela carteira',
   await expect(page.getByRole('heading', { name: 'Perfil do colecionador' })).toBeVisible()
   await expect(page.getByLabel('Nome de exibição')).toHaveValue('Ana Souza')
   await expect(page.getByLabel('Nome de usuário')).toHaveValue('ana')
-  await expect(page.locator('#pgto-network')).toHaveValue('ethereum')
-  await expect(page.getByLabel('Tipo de carteira')).toHaveValue('metamask')
+  await expect(page.locator('#pgto-network')).toHaveAttribute('data-value', 'ethereum')
+  await expect(page.getByLabel('Tipo de carteira')).toHaveAttribute('data-value', 'metamask')
   await expect(page.getByLabel('Código de indicação')).toHaveValue('KURIO2026')
   await expect(page.getByLabel('Nome ENS')).toHaveValue('ana')
   // o endereço vem da carteira escolhida e não é editável aqui
@@ -304,8 +305,8 @@ test('os campos do formulário seguem o Figma e vêm preenchidos pela carteira',
 test('trocar de carteira troca rede, tipo e dados do formulário', async ({ page }) => {
   await startCheckout(page)
   await page.getByLabel(/Reserva/).check()
-  await expect(page.locator('#pgto-network')).toHaveValue('polygon')
-  await expect(page.getByLabel('Tipo de carteira')).toHaveValue('coinbase')
+  await expect(page.locator('#pgto-network')).toHaveAttribute('data-value', 'polygon')
+  await expect(page.getByLabel('Tipo de carteira')).toHaveAttribute('data-value', 'coinbase')
 })
 
 test('campos obrigatórios vazios mostram erro e não abrem a revisão', async ({ page }) => {
@@ -361,4 +362,24 @@ test('o recibo mostra a faixa de dados, a tabela e o link do explorador simulado
 
   await page.getByRole('link', { name: 'Ver no Etherscan' }).click()
   await expect(page.getByRole('heading', { name: /Explorador de blocos \(simulado\)/ })).toBeVisible()
+})
+
+test('a lista de opções abre e escolhe pelo teclado, e Esc fecha sem mudar o valor', async ({ page }) => {
+  await startCheckout(page)
+  const tipo = page.getByLabel('Tipo de carteira')
+  await tipo.focus()
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('listbox')).toBeVisible()
+  await expect(page.getByRole('option')).toHaveText(['MetaMask', 'WalletConnect', 'Coinbase Wallet'])
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('listbox')).toBeHidden()
+  await expect(tipo).toHaveAttribute('data-value', 'walletconnect')
+
+  await page.keyboard.press('Enter')
+  await page.keyboard.press('End')
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('listbox')).toBeHidden()
+  await expect(tipo).toHaveAttribute('data-value', 'walletconnect')
+  await expect(tipo).toBeFocused()
 })

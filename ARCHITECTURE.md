@@ -61,7 +61,7 @@ O carrinho vive no "servidor" (mock), por dono: o id do usuário, ou um id de vi
 | Metadados de filtro | `staleTime` 5 min |
 | Cotação do checkout | `staleTime` 0, buscada de novo ao revisar o pedido |
 | Sessão | `staleTime` infinito; só muda por login, logout ou 401 |
-| Pedido | consulta única; só faz polling a cada 1,5 s se o socket estiver desconectado |
+| Pedido | o resultado chega pelo socket; enquanto o pedido está pendente há polling de segurança (3 s com o socket conectado, 1,5 s sem ele). Um `order.updated` que chega antes de o pedido estar no cache refaz a consulta |
 
 Invalidações: após qualquer evento que muda um NFT no carrinho, invalidam-se `cart` e `quote`; após um pedido confirmado, `cart` e `nfts`. Ao reconectar o socket, `invalidateQueries()` busca de novo tudo o que está ativo.
 

@@ -77,11 +77,14 @@ test('evento duplicado e evento antigo são ignorados', async ({ page }) => {
   await mock(page, 'realtime.resend', 'nft.updated', last)
   await mock(page, 'realtime.resend', 'nft.updated', { ...last, eventId: 'old-1', version: 1, price: '0.10' })
 
-  // dá tempo de o cliente processar, depois confere que nada mudou
-  await page.waitForTimeout(500)
+  // um evento mais novo serve de marcador: o socket entrega em ordem, então quando ele aparece
+  // o cliente já processou o duplicado e o antigo
+  await mock(page, 'updateNft', '4', { price: '2.50' })
+  await expect(page.getByText('mudou para 2.50 ETH')).toHaveCount(1)
+
   await expect(page.getByText('mudou para 2.00 ETH')).toHaveCount(1)
   await expect(page.getByText('mudou para 0.10 ETH')).toHaveCount(0)
-  await expect(page.getByRole('complementary', { name: 'Resumo da carteira' })).toContainText('2.0025 ETH')
+  await expect(page.getByRole('complementary', { name: 'Resumo da carteira' })).toContainText('2.5025 ETH')
 })
 
 test('resultado do pedido chega pelo socket', async ({ page }) => {

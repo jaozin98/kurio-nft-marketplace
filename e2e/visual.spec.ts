@@ -8,7 +8,9 @@ const options = { fullPage: true, maxDiffPixelRatio: 0.01 }
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready)
   await page.locator('.shimmer').first().waitFor({ state: 'detached' }).catch(() => {})
-  await page.waitForTimeout(300)
+  await page.waitForFunction(() => [...document.images].every((image) => image.loading === 'lazy' || image.complete))
+  // dois quadros para a pintura final depois das imagens e das fontes
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))))
 }
 
 test('início', async ({ page }) => {

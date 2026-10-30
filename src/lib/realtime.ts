@@ -120,6 +120,11 @@ function applyNft(event: NftEvent) {
 }
 
 function applyOrder(event: OrderEvent) {
+  // o evento chegou antes de o pedido estar no cache: não há o que atualizar, então busca o estado atual
+  if (!queryClient.getQueryData(['order', event.orderId])) {
+    queryClient.invalidateQueries({ queryKey: ['order', event.orderId] })
+  }
+
   queryClient.setQueryData<Order>(['order', event.orderId], (current) =>
     current && event.version > current.version
       ? {

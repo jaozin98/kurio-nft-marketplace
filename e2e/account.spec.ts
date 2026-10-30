@@ -217,8 +217,10 @@ test.describe('carteiras', () => {
   const fill = async (form: import('@playwright/test').Locator, data: Record<string, string>) => {
     for (const [label, value] of Object.entries(data)) {
       const field = form.getByLabel(label, { exact: true })
-      if ((await field.evaluate((el) => el.tagName)) === 'SELECT') await field.selectOption(value)
-      else await field.fill(value)
+      if ((await field.getAttribute('role')) === 'combobox') {
+        await field.click()
+        await form.locator(`[role=option][data-value="${value}"]`).click()
+      } else await field.fill(value)
     }
   }
 
@@ -311,8 +313,8 @@ test.describe('carteiras', () => {
     await page.getByLabel('Igual à carteira principal').check()
     await page.getByRole('button', { name: 'Adicionar' }).click()
     const secundaria = page.getByRole('form', { name: 'Carteira secundária' })
-    await expect(secundaria.getByLabel('Rede', { exact: true })).toHaveValue('polygon')
-    await expect(secundaria.getByLabel('Tipo de carteira')).toHaveValue('coinbase')
+    await expect(secundaria.getByLabel('Rede', { exact: true })).toHaveAttribute('data-value', 'polygon')
+    await expect(secundaria.getByLabel('Tipo de carteira')).toHaveAttribute('data-value', 'coinbase')
     await expect(secundaria.getByLabel('Endereço da carteira')).toHaveValue('')
   })
 

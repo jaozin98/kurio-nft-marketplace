@@ -1,5 +1,5 @@
-import { Eye, EyeOff } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { Check, ChevronDown, Eye, EyeOff } from 'lucide-react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label as LabelPrimitive } from '@/components/ui/label'
 
@@ -128,27 +128,115 @@ export function SelectField({
   required?: boolean
   options: { value: string; label: string }[]
 }) {
+  const [open, setOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const root = useRef<HTMLDivElement>(null)
+  const button = useRef<HTMLButtonElement>(null)
+  const listId = `${id}-lista`
+  const selected = options.find((option) => option.value === value)
+
+  // fecha ao clicar fora
+  useEffect(() => {
+    if (!open) return
+    function onPointerDown(event: PointerEvent) {
+      if (!root.current?.contains(event.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => document.removeEventListener('pointerdown', onPointerDown)
+  }, [open])
+
+  function openList() {
+    const index = options.findIndex((option) => option.value === value)
+    setActive(index >= 0 ? index : 0)
+    setOpen(true)
+  }
+
+  function choose(index: number) {
+    onChange(options[index].value)
+    setOpen(false)
+    button.current?.focus()
+  }
+
+  function onKeyDown(event: React.KeyboardEvent) {
+    if (!open) {
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(event.key)) {
+        event.preventDefault()
+        openList()
+      }
+      return
+    }
+    if (event.key === 'ArrowDown') setActive((index) => Math.min(index + 1, options.length - 1))
+    else if (event.key === 'ArrowUp') setActive((index) => Math.max(index - 1, 0))
+    else if (event.key === 'Home') setActive(0)
+    else if (event.key === 'End') setActive(options.length - 1)
+    else if (event.key === 'Enter' || event.key === ' ') choose(active)
+    else if (event.key === 'Escape') setOpen(false)
+    else if (event.key === 'Tab') setOpen(false)
+    else if (event.key.length === 1) {
+      // digitar a inicial vai para a primeira opção que começa com ela
+      const found = options.findIndex((option) => option.label.toLowerCase().startsWith(event.key.toLowerCase()))
+      if (found >= 0) setActive(found)
+      return
+    } else return
+    event.preventDefault()
+    // dentro de um <dialog>, o Esc fecharia o modal junto com a lista
+    if (event.key === 'Escape') event.stopPropagation()
+  }
+
   return (
-    <div>
+    <div ref={root} className="relative">
       <Label id={id} required={required}>
         {label}
       </Label>
-      <select
+      <button
+        ref={button}
         id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+        type="button"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listId}
+        aria-activedescendant={open ? `${id}-opcao-${active}` : undefined}
         aria-invalid={!!error}
         aria-required={required}
         aria-describedby={error ? `${id}-erro` : undefined}
-        className={`${control} ${value ? '' : 'text-muted-foreground/70'}`}
+        data-value={value}
+        onClick={() => (open ? setOpen(false) : openList())}
+        onKeyDown={onKeyDown}
+        className={`${control} flex items-center justify-between text-left ${
+          selected ? '' : 'text-muted-foreground/70'
+        }`}
       >
-        <option value="">{placeholder}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+        <span className="truncate">{selected?.label ?? placeholder}</span>
+        <ChevronDown aria-hidden className={`size-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <ul
+          id={listId}
+          role="listbox"
+          aria-labelledby={id}
+          className="absolute left-0 right-0 z-30 mt-1 max-h-60 overflow-auto rounded border border-border bg-card py-1 shadow-lg"
+        >
+          {options.map((option, index) => (
+            <li
+              key={option.value}
+              id={`${id}-opcao-${index}`}
+              role="option"
+              aria-selected={option.value === value}
+              data-value={option.value}
+              onPointerDown={(event) => event.preventDefault()}
+              onClick={() => choose(index)}
+              onPointerMove={() => setActive(index)}
+              className={`flex cursor-pointer items-center justify-between px-3 py-2 text-sm ${
+                index === active ? 'bg-secondary text-primary' : ''
+              } ${option.value === value ? 'font-bold' : ''}`}
+            >
+              {option.label}
+              {option.value === value && <Check aria-hidden className="size-4" />}
+            </li>
+          ))}
+        </ul>
+      )}
       <ErrorText id={id} error={error} />
     </div>
   )
